@@ -284,5 +284,5 @@ KernelSU Next is GPL-2.0. Samsung components remain the property of their respec
 This is an unofficial community build, not affiliated with or endorsed by Samsung.
 
 <p align="center">
-  <sub>Built by <a href="https://github.com/JackRipper-ID">JackRipper_ID</a> · AjralDEV</sub>
+  <sub>Built by <a href="https://github.com/JackRipper-ID">JackRipper-ID</a> · AjralDEV</sub>
 </p>
