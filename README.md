@@ -1,172 +1,158 @@
-# AjralDEV Kernel — Samsung Galaxy Note20 Ultra 5G (Snapdragon) `c2q`
+<p align="center">
+  <img src="assets/banner.svg" alt="AjralDEV Kernel — c2q" width="100%">
+</p>
 
-Custom Linux **4.19.113** kernel for the Samsung Galaxy Note20 Ultra 5G Snapdragon variant
-(`c2q` / `c2qksw` / SM-N986N), Android 13 / One UI 5.1.1.
+<p align="center">
+  <a href="https://github.com/JackRipper-ID/AjralDEV-Kernel-c2q/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/JackRipper-ID/AjralDEV-Kernel-c2q?style=for-the-badge&label=release&color=6366f1"></a>
+  <img alt="Kernel" src="https://img.shields.io/badge/kernel-4.19.113-0ea5e9?style=for-the-badge">
+  <img alt="KernelSU Next" src="https://img.shields.io/badge/KernelSU_Next-v3.4.0--legacy-22c55e?style=for-the-badge">
+  <img alt="NetHunter" src="https://img.shields.io/badge/NetHunter-monitor_%2B_injection-c084fc?style=for-the-badge">
+  <img alt="License" src="https://img.shields.io/badge/license-GPL--2.0-f59e0b?style=for-the-badge">
+</p>
 
-This build combines two feature sets that normally require flashing two different kernels:
-
-* **KernelSU Next** (root manager) — working alongside Magisk in the same ramdisk
-* **NetHunter** — `MAC80211` stack plus nine built-in USB Wi-Fi drivers for monitor mode / packet injection
-
-Both live in a **single kernel image**, so there is no more flashing back and forth.
-
----
-
-## Why this kernel exists
-
-The device is **A-only** (`is_slot_device=0`): there is exactly one boot partition
-(`/dev/block/sda23`). Two kernels cannot coexist. Previously the choices were:
-
-| Kernel | KernelSU Next | Wi-Fi monitor | Storage tuning |
-|---|---|---|---|
-| `4.19.325-AjralDEV` (v7.1) | ✅ | ❌ (`MAC80211` not set) | BFQ compiled, CFQ default |
-| `4.19.113` (old NetHunter build) | ❌ (`CONFIG_KSU` not set) | ✅ | no BFQ |
-| **This build** | ✅ | ✅ | BFQ + WBT enabled |
+<p align="center">
+  <b>One kernel. Root and radio, together.</b><br>
+  <sub>KernelSU Next + Magisk hybrid root &nbsp;·&nbsp; MAC80211 monitor mode &nbsp;·&nbsp; nine built-in USB Wi-Fi drivers</sub>
+</p>
 
 ---
 
-## Image details
+## ⚡ Why this exists
 
-```
-Linux version 4.19.113 (ajraldev@Killer) (clang version 10.0.6 for Android NDK)
-#1 SMP PREEMPT Fri Nov 20 20:49:25 WIB 2026
-```
+The Galaxy Note20 Ultra Snapdragon is **A-only** — a single boot partition, no slot B. Two kernels cannot coexist, so every capability used to cost you a reflash.
 
-| Artifact | Size | SHA-256 |
-|---|---|---|
-| `Image` | 55,439,372 B | `c0adedba7de461ae95218fe1bb501d069275e9c53ffa5cce33c3a1a3d31c6a0c` |
-| `dtb` | 1,580,275 B | `db077314559f25032c4ef178a30089067155fd4ded5417aed4dc75d09fd25a82` |
-| Flashable zip | 20,918,653 B | `e1651ce1c664908a5a834103e0183bfc288ebf904499150e4da834e1771ec9aa` |
+| | KernelSU Next | Wi-Fi monitor | BFQ / WBT | MGLRU |
+|:--|:--:|:--:|:--:|:--:|
+| `4.19.325` community build | ✅ | ❌ | ⚠️ compiled, CFQ default | ✅ |
+| `4.19.113` NetHunter build | ❌ | ✅ | ❌ | ❌ |
+| **This build** | ✅ | ✅ | ✅ | ❌ |
 
-### DTB determinism
-
-The device tree blob was rebuilt from source and is **byte-identical** to the blob inside the
-original 4.19.113 boot image, which proves the source tree identity:
-
-| Entry | Size | SHA-256 prefix | Built from |
-|---|---|---|---|
-| 0 | 528,520 B | `b3aeb34a66528acc` | `kona-v2.1.dtb` |
-| 1 | 528,516 B | `d68acf630e4473bc` | `kona-v2.dtb` |
-| 2 | 523,066 B | `b463d63283610c57` | `kona.dtb` |
-| 3 | 173 B | `9becad76b4e58a82` | RTIC `MP_DATA` (Samsung, runtime) |
+> [!NOTE]
+> MGLRU is a local backport that exists only in the 4.19.325 tree. It is not part of upstream 4.19.113, so this kernel uses classic LRU. See [Known limitations](#-known-limitations).
 
 ---
 
-## Kernel configuration highlights
+## 🧩 What's inside
 
-All options below are built-in (`=y`). No external modules are required — and none can be
-loaded, because `CONFIG_MODULE_SIG_FORCE=y`.
+<table>
+<tr>
+<td width="50%" valign="top">
 
-### Wi-Fi / monitor mode
-
+**Root**
+```ini
+CONFIG_KSU=y
+CONFIG_KPROBES=y      # hook: Kprobes
 ```
+KernelSU Next `v3.4.0-legacy` runs from the kernel driver while Magisk keeps first-stage init. Both are active at once — the ramdisk is reused, never replaced.
+
+</td>
+<td width="50%" valign="top">
+
+**Radio**
+```ini
 CONFIG_MAC80211=y
 CONFIG_MAC80211_MESH=y
-CONFIG_MAC80211_LEDS=y
-CONFIG_MAC80211_RC_DEFAULT="minstrel_ht"
-CONFIG_CFG80211=y
 CONFIG_CFG80211_WEXT=y
 CONFIG_NL80211_TESTMODE=y
-CONFIG_RFKILL=y
 ```
+Monitor mode and raw injection on external adapters, with `minstrel_ht` rate control.
 
-### USB Wi-Fi drivers (built-in)
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
 
-| Driver | Supported adapters |
-|---|---|
-| `CONFIG_ATH9K_HTC=y` | AR9271, AR7010 |
-| `CONFIG_CARL9170=y` | AR9170 |
-| `CONFIG_RT2800USB=y` | RT3070, RT5370, RT5572, RT33xx, RT35xx, RT3573, RT53xx, RT55xx |
-| `CONFIG_MT7601U=y` | MT7601U |
-| `CONFIG_RTL8XXXU=y` | RTL8188, RTL8192, RTL8723 (CU/AU) |
-| `CONFIG_RTL8187=y` | RTL8187L/B |
-| `CONFIG_ZD1211RW=y` | ZD1211, ZD1211B, ZD1215 |
-| `CONFIG_P54_USB=y` | Prism54 USB |
-
-### KernelSU Next
-
-```
-CONFIG_KSU=y
-CONFIG_KPROBES=y          # hook mode: Kprobes
-```
-
-* KernelSU Next **v3.4.0-legacy** (tag `33327`)
-* Manager signature hash: `79e590113c4c4c0c222978e413a5faa801666957b1212a328e46c00c69821bf7`
-* Core patches applied to `fs/open.c`, `fs/exec.c`, `fs/stat.c`, `fs/read_write.c`,
-  `fs/namespace.c`, `kernel/reboot.c`, `drivers/input/input.c`, plus SELinux hooks
-
-### Storage / memory
-
-```
+**Storage**
+```ini
 CONFIG_IOSCHED_BFQ=y
 CONFIG_BFQ_GROUP_IOSCHED=y
 CONFIG_BLK_WBT=y
 CONFIG_BLK_WBT_MQ=y
-CONFIG_BLK_WBT_SQ=y
 CONFIG_BLK_CGROUP_IOLATENCY=y
 ```
 
-`CONFIG_LRU_GEN` (MGLRU) is **not available** in this tree — see limitations below.
+</td>
+<td width="50%" valign="top">
 
-### USB / netfilter (NetHunter)
-
-```
-CONFIG_USB_GADGET=y
-CONFIG_USB_CONFIGFS_F_HID=y     # BadUSB
+**NetHunter plumbing**
+```ini
+CONFIG_USB_CONFIGFS_F_HID=y   # BadUSB
 CONFIG_HIDRAW=y
-CONFIG_USB_HIDDEV=y
-CONFIG_IP_NF_IPTABLES=y
 CONFIG_IP_NF_TARGET_MASQUERADE=y
 CONFIG_NETFILTER_XT_MATCH_STRING=y
 CONFIG_NETFILTER_XT_TARGET_NFQUEUE=y
 CONFIG_BRIDGE_NF_EBTABLES=y
-CONFIG_L2TP=y
-CONFIG_TUN=y
-CONFIG_NET_SCH_HTB=y
-CONFIG_NET_CLS_U32=y
-CONFIG_USB_USBNET=y
-CONFIG_USB_RNDIS=y
-CONFIG_USB_NET_AX88179_178A=y
-CONFIG_USB_NET_CDC_NCM=y
 ```
 
-Full resolved configuration: [`kernel/c2q_kor_singlew_defconfig`](kernel/c2q_kor_singlew_defconfig)
+</td>
+</tr>
+</table>
+
+### 📡 Supported USB adapters
+
+| Driver | Chipsets |
+|:--|:--|
+| `ath9k_htc` | **AR9271**, AR7010 |
+| `carl9170` | AR9170 |
+| `rt2800usb` | RT3070, **RT5370**, RT5572, RT33xx, RT35xx, RT3573, RT53xx, RT55xx |
+| `mt7601u` | MT7601U |
+| `rtl8xxxu` | RTL8188, RTL8192, RTL8723 (CU/AU) |
+| `rtl8187` | RTL8187L/B |
+| `zd1211rw` | ZD1211, ZD1211B, ZD1215 |
+| `p54usb` | Prism54 USB |
+
+All built-in (`=y`). No modules, no signing, no compile step on device.
 
 ---
 
-## Ramdisk
+## 📦 Downloads
 
-The flashable zip **ships no ramdisk**. The AnyKernel3 installer reuses the ramdisk already
-installed on the device (Magisk first-stage init + `overlay.d`). This was verified safe: the
-ramdisk inside the original 4.19.113 boot image and the one inside the 4.19.325 boot image
-decompress to the **same 11,069,928-byte cpio with the same 28 entries**.
+| Asset | Size | SHA-256 |
+|:--|--:|:--|
+| [`AjralDEV-Kernel-c2q-4.19.113-KSU-NetHunter-android13.zip`](https://github.com/JackRipper-ID/AjralDEV-Kernel-c2q/releases/latest) | 20,918,653 B | `e1651ce1…71ec9aa` |
+| [`Image`](https://github.com/JackRipper-ID/AjralDEV-Kernel-c2q/releases/latest) | 55,439,372 B | `c0adedba…d31c6a0c` |
+| [`dtb`](https://github.com/JackRipper-ID/AjralDEV-Kernel-c2q/releases/latest) | 1,580,275 B | `db077314…9fd25a82` |
 
-Magisk handles first-stage init; KernelSU Next runs from the kernel driver via Kprobes.
-Both root solutions stay active at the same time.
+<details>
+<summary><b>Full SHA-256 checksums</b></summary>
+
+```
+e1651ce1c664908a5a834103e0183bfc288ebf904499150e4da834e1771ec9aa  AjralDEV-Kernel-c2q-4.19.113-KSU-NetHunter-android13.zip
+c0adedba7de461ae95218fe1bb501d069275e9c53ffa5cce33c3a1a3d31c6a0c  Image
+db077314559f25032c4ef178a30089067155fd4ded5417aed4dc75d09fd25a82  dtb
+```
+
+</details>
 
 ---
 
-## Flash instructions
+## 🚀 Flash
 
-1. Boot into **TWRP / OrangeFox**
-2. Install `AjralDEV-Kernel-c2q-4.19.113-KSU-NetHunter-android13.zip`
-3. Do **not** wipe anything
+```text
+1. Boot into TWRP / OrangeFox
+2. Install the zip
+3. Do not wipe anything
 4. Reboot to system
+```
 
-The installer backs up the current boot partition to
-`/sdcard/backup/boot-<YYYYMMDD-HHMMSS>.img` before writing.
+> [!IMPORTANT]
+> The installer copies the current boot partition to `/sdcard/backup/boot-<YYYYMMDD-HHMMSS>.img` **before** writing anything.
 
-### Verify after boot
+<details>
+<summary><b>Verify after boot</b></summary>
 
 ```bash
-su -c "uname -r"                                    # 4.19.113
-su -c "magisk -v"                                   # 31.1:MAGISK:R
-su -c "dmesg | grep -i kernelsu"                    # v3.4.0-legacy, hook: kprobes
+su -c "uname -r"                      # 4.19.113
+su -c "magisk -v"                     # 31.1:MAGISK:R
+su -c "dmesg | grep -i kernelsu"      # v3.4.0-legacy, hook: kprobes
 su -c "zcat /proc/config.gz | grep MAC80211=y"
 su -c "iw list | head -20"
 ```
 
-### Enable monitor mode
+</details>
+
+<details>
+<summary><b>Enable monitor mode</b></summary>
 
 ```bash
 su -c "ip link set wlan1 down"
@@ -175,59 +161,128 @@ su -c "ip link set wlan1 up"
 su -c "iw dev wlan1 info"
 ```
 
-A helper script is provided: [`scripts/monitor-mode.sh`](scripts/monitor-mode.sh)
+Or use the helper:
+
+```bash
+sh scripts/monitor-mode.sh wlan1 up
+sh scripts/monitor-mode.sh wlan1 down
+```
+
+</details>
 
 ---
 
-## Known limitations
+## 🔬 Build integrity
 
-* **No MGLRU** — `CONFIG_LRU_GEN` does not exist in this 4.19.113 tree. The 4.19.325 build
-  shipped a local MGLRU backport; this kernel uses classic LRU.
-* **No out-of-tree module loading** — `CONFIG_MODULE_SIG_FORCE=y` and `CONFIG_MODVERSIONS=y`
-  mean any external module must be signed with this kernel's private signing key. Drivers are
-  built-in instead.
-* **RTL8812AU / RTW88 not included** — these drivers are not part of the upstream 4.19 tree and
-  were not backported.
-* **TC/IFB** is not enabled in the Samsung base config, so NetHunter MitM setups that rely on
-  `ifb` may not work. Plain `iptables` NAT still works.
-* **On-board BCM4375** (`bcmdhd`) does not support monitor mode — only the USB adapters above.
+The device tree blob was rebuilt from source and is **byte-for-byte identical** to the blob inside the original 4.19.113 boot image — proof that the source tree matches the shipped kernel.
 
----
+| DTB entry | Size | SHA-256 prefix | Origin |
+|:--|--:|:--|:--|
+| 0 | 528,520 B | `b3aeb34a66528acc` | `kona-v2.1.dtb` |
+| 1 | 528,516 B | `d68acf630e4473bc` | `kona-v2.dtb` |
+| 2 | 523,066 B | `b463d63283610c57` | `kona.dtb` |
+| 3 | 173 B | `9becad76b4e58a82` | RTIC `MP_DATA` |
 
-## Build notes
-
-Source tree: [`postkevone/c2q-kernelsu-next`](https://github.com/postkevone/c2q-kernelsu-next)
-(base `N986NKSSAHYH1`, Linux 4.19.113), KernelSU Next `legacy` branch, AOSP clang 10.0.6.
-
-Three host-environment issues had to be fixed to build this tree in 2026:
-
-| Problem | Cause | Fix |
-|---|---|---|
-| `prerequisites cannot be defined in recipes` | GNU Make 4.4 vs Samsung `techpack` Makefiles | build with **GNU Make 4.3** |
-| `undefined reference to ENGINE_*` | OpenSSL 4.x removed the ENGINE API used by `scripts/sign-file.c` | `#define OPENSSL_ENGINE_STUBS 1` in `scripts/sign-file.c` and `scripts/extract-cert.c` |
-| `implicit declaration of strscpy_pad` | KernelSU Next guard assumes `strscpy_pad` exists since 4.14.222; it only landed in 4.20 | change the guard in `drivers/kernelsu/compat/kernel_compat.h` from `4.14.222` to `4.20.0` |
-
-Applied changes are in [`patches/`](patches). Build script: [`scripts/build.sh`](scripts/build.sh)
+```text
+Linux version 4.19.113 (ajraldev@Killer)
+clang version 10.0.6 for Android NDK
+#1 SMP PREEMPT Fri Nov 20 20:49:25 WIB 2026
+```
 
 ---
 
-## Rollback
+## ⚠️ Known limitations
 
-Three independent rollback paths:
+| Limitation | Detail |
+|:--|:--|
+| **No MGLRU** | `CONFIG_LRU_GEN` does not exist in the 4.19.113 tree |
+| **No external modules** | `MODULE_SIG_FORCE=y` + `MODVERSIONS=y` — drivers must be built-in |
+| **No RTL8812AU / RTW88** | Not part of upstream 4.19, not backported |
+| **No on-board monitor** | BCM4375 (`bcmdhd`) is STA-only; USB adapters only |
+| **No TC/IFB** | Not enabled in the Samsung base config; plain `iptables` NAT works |
 
-1. `/sdcard/backup/boot-<date>.img` — created automatically by the installer
-2. The previous `4.19.325-AjralDEV` boot image
-   (SHA-256 `15646f4fd9c813f7dc7dfc4f95450287dd503a0c1494e5a9deb77e522c6a4a1f`)
+---
+
+## 🛠 Reproducing the build
+
+Source: [`postkevone/c2q-kernelsu-next`](https://github.com/postkevone/c2q-kernelsu-next) (`N986NKSSAHYH1`) · KernelSU Next `legacy` · AOSP clang 10.0.6
+
+Three host-environment fixes are required on modern distros:
+
+| Symptom | Cause | Fix |
+|:--|:--|:--|
+| `prerequisites cannot be defined in recipes` | GNU Make 4.4 vs Samsung `techpack` | build with **GNU Make 4.3** |
+| `undefined reference to ENGINE_*` | OpenSSL 4.x removed the ENGINE API | `#define OPENSSL_ENGINE_STUBS 1` in `scripts/sign-file.c` + `scripts/extract-cert.c` |
+| `implicit declaration of strscpy_pad` | KernelSU Next guard uses `4.14.222`; the symbol landed in 4.20 | patch `drivers/kernelsu/compat/kernel_compat.h` guard to `4.20.0` |
+
+<details>
+<summary><b>Repository layout</b></summary>
+
+```text
+.
+├── assets/banner.svg
+├── kernel/c2q_kor_singlew_defconfig     # resolved config
+├── patches/
+│   ├── 0001-kernelsu-next-and-build-fixes.patch
+│   └── 0002-defconfig-nethunter.patch
+├── scripts/
+│   ├── anykernel.sh
+│   ├── build.sh
+│   └── monitor-mode.sh
+├── LICENSE
+├── SHA256SUMS
+└── README.md
+```
+
+</details>
+
+<details>
+<summary><b>Build commands</b></summary>
+
+```bash
+# 1. source + toolchain
+git clone --depth 1 -b main https://github.com/postkevone/c2q-kernelsu-next.git c2q
+git clone --depth 1 -b toolchain https://github.com/postkevone/sm8250-toolchain.git c2q/toolchain
+
+# 2. KernelSU Next (legacy) + core patches
+cd c2q
+curl -LSs https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh | bash -s legacy
+cp -rf kernelsu-patches/. .
+cp -f kernelsu-defconfig/c2q_kor_singlew_defconfig arch/arm64/configs/vendor/
+
+# 3. apply host fixes
+patch -p1 < ../patches/0001-kernelsu-next-and-build-fixes.patch
+
+# 4. build (GNU Make 4.3 required)
+ARCH=arm64 CROSS_COMPILE=$PWD/toolchain/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/aarch64-linux-android- \
+REAL_CC=$PWD/toolchain/llvm-arm-toolchain-ship/10.0/bin/clang CLANG_TRIPLE=aarch64-linux-gnu- \
+make -j$(nproc) O=out DTC_EXT=$PWD/tools/dtc CONFIG_BUILD_ARM64_DT_OVERLAY=y \
+  vendor/c2q_kor_singlew_defconfig Image
+```
+
+</details>
+
+---
+
+## ↩️ Rollback
+
+Three independent paths back:
+
+1. `/sdcard/backup/boot-<date>.img` — written automatically by the installer
+2. The previous `4.19.325` boot image — `15646f4f…6c6a4a1f`
 3. Re-flash the previous AnyKernel zip for 4.19.325
 
 ---
 
-## License
+## 📄 License
 
-The Linux kernel is licensed under **GPL-2.0**. See [`LICENSE`](LICENSE).
-KernelSU Next is GPL-2.0. Any redistribution of the kernel binary must comply with the GPL;
-the corresponding source tree, defconfig, and patches used for this build are published in
-this repository.
+Kernel sources are **GPL-2.0**. See [LICENSE](LICENSE). Any redistribution of the binary must
+comply with the GPL — the defconfig, patches, and build scripts used here are published in this
+repository.
 
-Samsung-specific components remain the property of their respective owners. This is an
-unofficial community build, not affiliated with or endorsed by Samsung.
+KernelSU Next is GPL-2.0. Samsung components remain the property of their respective owners.
+This is an unofficial community build, not affiliated with or endorsed by Samsung.
+
+<p align="center">
+  <sub>Built by <a href="https://github.com/JackRipper-ID">JackRipper</a> · AjralDEV</sub>
+</p>
