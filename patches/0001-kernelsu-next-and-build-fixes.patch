@@ -1,0 +1,849 @@
+diff --git a/arch/arm64/configs/vendor/c2q_kor_singlew_defconfig b/arch/arm64/configs/vendor/c2q_kor_singlew_defconfig
+index 044a59ae2..b9f822b34 100644
+--- a/arch/arm64/configs/vendor/c2q_kor_singlew_defconfig
++++ b/arch/arm64/configs/vendor/c2q_kor_singlew_defconfig
+@@ -20,7 +20,7 @@ CONFIG_THREAD_INFO_IN_TASK=y
+ CONFIG_INIT_ENV_ARG_LIMIT=32
+ # CONFIG_COMPILE_TEST is not set
+ CONFIG_LOCALVERSION=""
+-CONFIG_LOCALVERSION_AUTO=y
++CONFIG_LOCALVERSION_AUTO=n
+ CONFIG_BUILD_SALT=""
+ CONFIG_DEFAULT_HOSTNAME="(none)"
+ CONFIG_SWAP=y
+@@ -459,25 +459,6 @@ CONFIG_SWP_EMULATION=y
+ CONFIG_CP15_BARRIER_EMULATION=y
+ CONFIG_SETEND_EMULATION=y
+ # CONFIG_ARM64_SW_TTBR0_PAN is not set
+-CONFIG_UH=y
+-CONFIG_UH_RKP=y
+-CONFIG_KDP_CRED=y
+-CONFIG_KDP_NS=y
+-CONFIG_KDP_DMAP=y
+-CONFIG_UH_LKM_BLOCK=y
+-
+-#
+-# Control Flow Protection
+-#
+-CONFIG_CFP=y
+-CONFIG_CFP_JOPP=y
+-CONFIG_CFP_JOPP_MAGIC=0x00be7bad
+-CONFIG_CFP_ROPP=y
+-CONFIG_CFP_ROPP_SYSREGKEY=y
+-# CONFIG_CFP_ROPP_RANDKEY is not set
+-# CONFIG_CFP_ROPP_FIXKEY is not set
+-# CONFIG_CFP_ROPP_ZEROKEY is not set
+-# CONFIG_CFP_TEST is not set
+ 
+ #
+ # ARMv8.1 architectural features
+@@ -643,7 +624,7 @@ CONFIG_CRYPTO_AES_ARM64_CE_BLK=y
+ #
+ # General architecture-dependent options
+ #
+-# CONFIG_KPROBES is not set
++CONFIG_KPROBES=y
+ # CONFIG_JUMP_LABEL is not set
+ CONFIG_UPROBES=y
+ CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS=y
+@@ -744,8 +725,8 @@ CONFIG_BLK_DEV_BSG=y
+ CONFIG_BLK_IO_VOLUME=y
+ CONFIG_BLK_TURBO_WRITE=y
+ # CONFIG_BLK_CMDLINE_PARSER is not set
+-# CONFIG_BLK_WBT is not set
+-# CONFIG_BLK_CGROUP_IOLATENCY is not set
++CONFIG_BLK_WBT=y
++CONFIG_BLK_CGROUP_IOLATENCY=y
+ CONFIG_BLK_DEBUG_FS=y
+ # CONFIG_BLK_SED_OPAL is not set
+ CONFIG_BLK_INLINE_ENCRYPTION=y
+@@ -791,7 +772,7 @@ CONFIG_DEFAULT_CFQ=y
+ CONFIG_DEFAULT_IOSCHED="cfq"
+ CONFIG_MQ_IOSCHED_DEADLINE=y
+ CONFIG_MQ_IOSCHED_KYBER=y
+-# CONFIG_IOSCHED_BFQ is not set
++CONFIG_IOSCHED_BFQ=y
+ CONFIG_ASN1=y
+ CONFIG_UNINLINE_SPIN_UNLOCK=y
+ CONFIG_ARCH_SUPPORTS_ATOMIC_RMW=y
+@@ -1463,9 +1444,47 @@ CONFIG_CFG80211_DEFAULT_PS=y
+ # CONFIG_CFG80211_DEBUGFS is not set
+ CONFIG_CFG80211_INTERNAL_REGDB=y
+ CONFIG_CFG80211_CRDA_SUPPORT=y
+-# CONFIG_CFG80211_WEXT is not set
++CONFIG_CFG80211_WEXT=y
+ CONFIG_CFG80211_REG_NOT_UPDATED=y
+-# CONFIG_MAC80211 is not set
++CONFIG_MAC80211=y
++CONFIG_MAC80211_MESH=y
++CONFIG_MAC80211_LEDS=y
++CONFIG_MAC80211_RC_DEFAULT="minstrel_ht"
++CONFIG_MAC80211_RC_DEFAULT_MINSTREL=y
++CONFIG_MAC80211_RC_MINSTREL=y
++CONFIG_MAC80211_RC_MINSTREL_HT=y
++CONFIG_ATH_COMMON=y
++CONFIG_ATH9K_HW=y
++CONFIG_ATH9K_COMMON=y
++CONFIG_ATH9K_BTCOEX_SUPPORT=y
++CONFIG_ATH9K_HTC=y
++CONFIG_CARL9170=y
++CONFIG_CARL9170_LEDS=y
++CONFIG_MT7601U=y
++CONFIG_RT2X00=y
++CONFIG_RT2X00_LIB=y
++CONFIG_RT2X00_LIB_USB=y
++CONFIG_RT2X00_LIB_CRYPTO=y
++CONFIG_RT2X00_LIB_FIRMWARE=y
++CONFIG_RT2X00_LIB_LEDS=y
++CONFIG_RT2800_LIB=y
++CONFIG_RT2800USB=y
++CONFIG_RT2800USB_RT33XX=y
++CONFIG_RT2800USB_RT35XX=y
++CONFIG_RT2800USB_RT3573=y
++CONFIG_RT2800USB_RT53XX=y
++CONFIG_RT2800USB_RT55XX=y
++CONFIG_RT2800USB_UNKNOWN=y
++CONFIG_RTL_CARDS=y
++CONFIG_RTL8XXXU=y
++CONFIG_RTL8XXXU_UNTESTED=y
++CONFIG_RTL8187=y
++CONFIG_RTL8187_LEDS=y
++CONFIG_ZD1211RW=y
++CONFIG_P54_COMMON=y
++CONFIG_P54_USB=y
++CONFIG_P54_LEDS=y
++
+ CONFIG_MAC80211_STA_HASH_MAX_SIZE=0
+ # CONFIG_WIMAX is not set
+ CONFIG_RFKILL=y
+@@ -6202,6 +6221,10 @@ CONFIG_OVERLAY_FS_REDIRECT_ALWAYS_FOLLOW=y
+ # CONFIG_OVERLAY_FS_METACOPY is not set
+ # CONFIG_INCREMENTAL_FS is not set
+ 
++# KernelSU
++CONFIG_KSU=y
++CONFIG_KSU_ALLOWLIST_WORKAROUND=y
++
+ #
+ # Caches
+ #
+@@ -6429,27 +6452,6 @@ CONFIG_INTEGRITY_TRUSTED_KEYRING=y
+ CONFIG_INTEGRITY_AUDIT=y
+ # CONFIG_IMA is not set
+ # CONFIG_EVM is not set
+-CONFIG_SECURITY_DEFEX=y
+-# CONFIG_DEFEX_KERNEL_ONLY is not set
+-CONFIG_SECURITY_DSMS=y
+-CONFIG_FIVE=y
+-# CONFIG_FIVE_GKI_10 is not set
+-# CONFIG_FIVE_GKI_20 is not set
+-# CONFIG_FIVE_DEBUG is not set
+-CONFIG_FIVE_CERT_USER="x509_five_user.der"
+-CONFIG_FIVE_DEFAULT_HASH_SHA1=y
+-# CONFIG_FIVE_DEFAULT_HASH_SHA256 is not set
+-# CONFIG_FIVE_DEFAULT_HASH_SHA512 is not set
+-CONFIG_FIVE_DEFAULT_HASH="sha1"
+-CONFIG_FIVE_TRUSTED_KEYRING=y
+-CONFIG_PROCA=y
+-# CONFIG_PROCA_GKI_10 is not set
+-CONFIG_PROCA_S_OS=y
+-CONFIG_GAF=y
+-# CONFIG_GAF_V3 is not set
+-# CONFIG_GAF_V4 is not set
+-# CONFIG_GAF_V5 is not set
+-CONFIG_GAF_V6=y
+ CONFIG_DEFAULT_SECURITY_SELINUX=y
+ # CONFIG_DEFAULT_SECURITY_SMACK is not set
+ # CONFIG_DEFAULT_SECURITY_DAC is not set
+@@ -6986,3 +6988,9 @@ CONFIG_CORESIGHT_REMOTE_ETM=y
+ CONFIG_CORESIGHT_REMOTE_ETM_DEFAULT_ENABLE=0
+ CONFIG_CORESIGHT_TGU=y
+ CONFIG_CORESIGHT_LINK_LATE_DISABLE=y
++
++CONFIG_BFQ_GROUP_IOSCHED=y
++
++CONFIG_BLK_WBT_MQ=y
++
++CONFIG_BLK_WBT_SQ=y
+diff --git a/drivers/Kconfig b/drivers/Kconfig
+index 0bd986904..636f28d22 100755
+--- a/drivers/Kconfig
++++ b/drivers/Kconfig
+@@ -270,4 +270,5 @@ source "drivers/security/samsung/tzic/Kconfig"
+ source "drivers/kunit/Kconfig"
+ 
+ source "drivers/spu_verify/Kconfig"
++source "drivers/kernelsu/Kconfig"
+ endmenu
+diff --git a/drivers/Makefile b/drivers/Makefile
+index f3f085fb4..831e634d3 100755
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -246,3 +246,5 @@ obj-$(CONFIG_GPS_BCM4753)	+= gps/
+ 
+ # SPU signature verify
+ obj-$(CONFIG_SPU_VERIFY) += spu_verify/
++
++obj-$(CONFIG_KSU) += kernelsu/
+diff --git a/drivers/input/input.c b/drivers/input/input.c
+index 1b307f200..240d88a04 100755
+--- a/drivers/input/input.c
++++ b/drivers/input/input.c
+@@ -433,11 +433,23 @@ static void input_handle_event(struct input_dev *dev,
+  * to 'seed' initial state of a switch or initial position of absolute
+  * axis, etc.
+  */
++
++ #ifdef CONFIG_KSU
++extern bool ksu_input_hook __read_mostly;
++extern __attribute__((cold)) int ksu_handle_input_handle_event(
++			unsigned int *type, unsigned int *code, int *value);
++#endif
++
+ void input_event(struct input_dev *dev,
+ 		 unsigned int type, unsigned int code, int value)
+ {
+ 	unsigned long flags;
+ 
++#ifdef CONFIG_KSU
++	if (unlikely(ksu_input_hook))
++		ksu_handle_input_handle_event(&type, &code, &value);
++#endif
++
+ 	if (is_event_supported(type, dev->evbit, EV_MAX)) {
+ 
+ 		spin_lock_irqsave(&dev->event_lock, flags);
+diff --git a/fs/exec.c b/fs/exec.c
+index a57e588cb..2e1a257db 100755
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -2075,12 +2075,20 @@ int do_execve_file(struct file *file, void *__argv, void *__envp)
+ 	return __do_execve_file(AT_FDCWD, NULL, argv, envp, 0, file);
+ }
+ 
++#ifdef CONFIG_KSU
++__attribute__((hot))
++extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr,
++				void *argv, void *envp, int *flags);
++#endif
+ int do_execve(struct filename *filename,
+ 	const char __user *const __user *__argv,
+ 	const char __user *const __user *__envp)
+ {
+ 	struct user_arg_ptr argv = { .ptr.native = __argv };
+ 	struct user_arg_ptr envp = { .ptr.native = __envp };
++#ifdef CONFIG_KSU
++	ksu_handle_execveat((int *)AT_FDCWD, &filename, &argv, &envp, 0);
++#endif
+ 	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
+ }
+ 
+diff --git a/fs/internal.h b/fs/internal.h
+index a47590445..d8babfebd 100755
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -85,6 +85,7 @@ extern int finish_automount(struct vfsmount *, struct path *);
+ extern int sb_prepare_remount_readonly(struct super_block *);
+ 
+ extern void __init mnt_init(void);
++int path_umount(struct path *path, int flags);
+ 
+ extern int __mnt_want_write_file(struct file *);
+ extern void __mnt_drop_write_file(struct file *);
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 48d513c92..bfb0c2b24 100755
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -2132,6 +2132,36 @@ SYSCALL_DEFINE1(oldumount, char __user *, name)
+ 
+ #endif
+ 
++static int can_umount(const struct path *path, int flags)
++ {
++	 struct mount *mnt = real_mount(path->mnt);
++	 if (flags & ~(MNT_FORCE | MNT_DETACH | MNT_EXPIRE | UMOUNT_NOFOLLOW))
++		 return -EINVAL;
++	 if (!may_mount())
++		 return -EPERM;
++	 if (path->dentry != path->mnt->mnt_root)
++		 return -EINVAL;
++	 if (!check_mnt(mnt))
++		 return -EINVAL;
++	 if (mnt->mnt.mnt_flags & MNT_LOCKED)
++		 return -EINVAL;
++	 if (flags & MNT_FORCE && !capable(CAP_SYS_ADMIN))
++		 return -EPERM;
++	 return 0;
++ }
++
++int path_umount(struct path *path, int flags)
++ {
++	 struct mount *mnt = real_mount(path->mnt);
++	 int ret;
++	 ret = can_umount(path, flags);
++	 if (!ret)
++		 ret = do_umount(mnt, flags);
++	 dput(path->dentry);
++	 mntput_no_expire(mnt);
++	 return ret;
++ }
++
+ static bool is_mnt_ns_file(struct dentry *dentry)
+ {
+ 	/* Is this a proxy for a mount namespace? */
+diff --git a/fs/open.c b/fs/open.c
+index 0b24ef199..aaeea21ea 100755
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -454,8 +454,17 @@ out:
+ 	return res;
+ }
+ 
++#ifdef CONFIG_KSU
++__attribute__((hot)) 
++extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user,
++				int *mode, int *flags);
++#endif
++
+ SYSCALL_DEFINE3(faccessat, int, dfd, const char __user *, filename, int, mode)
+ {
++#ifdef CONFIG_KSU
++	ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
++#endif
+ 	return do_faccessat(dfd, filename, mode);
+ }
+ 
+diff --git a/fs/read_write.c b/fs/read_write.c
+index b7d4c0004..9c6b054b3 100755
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -617,8 +617,18 @@ ssize_t ksys_read(unsigned int fd, char __user *buf, size_t count)
+ 	return ret;
+ }
+ 
++#ifdef CONFIG_KSU
++extern bool ksu_vfs_read_hook __read_mostly;
++extern __attribute__((cold)) int ksu_handle_sys_read(unsigned int fd,
++				char __user **buf_ptr, size_t *count_ptr);
++#endif
++
+ SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
+ {
++#ifdef CONFIG_KSU
++	if (unlikely(ksu_vfs_read_hook)) 
++		ksu_handle_sys_read(fd, &buf, &count);
++#endif
+ 	return ksys_read(fd, buf, count);
+ }
+ 
+diff --git a/fs/stat.c b/fs/stat.c
+index f8e6fb2c3..8a46f4f0e 100755
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -354,6 +354,12 @@ SYSCALL_DEFINE2(newlstat, const char __user *, filename,
+ 	return cp_new_stat(&stat, statbuf);
+ }
+ 
++#ifdef CONFIG_KSU
++__attribute__((hot)) 
++extern int ksu_handle_stat(int *dfd, const char __user **filename_user,
++				int *flags);
++#endif
++
+ #if !defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_SYS_NEWFSTATAT)
+ SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
+ 		struct stat __user *, statbuf, int, flag)
+@@ -361,6 +367,10 @@ SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
+ 	struct kstat stat;
+ 	int error;
+ 
++#ifdef CONFIG_KSU
++	ksu_handle_stat(&dfd, &filename, &flag);
++#endif
++
+ 	error = vfs_fstatat(dfd, filename, &stat, flag);
+ 	if (error)
+ 		return error;
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index e5320f6c8..e77f7b4f3 100755
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -11,6 +11,7 @@
+ #ifdef CONFIG_SECCOMP
+ 
+ #include <linux/thread_info.h>
++#include <linux/atomic.h>
+ #include <asm/seccomp.h>
+ 
+ struct seccomp_filter;
+@@ -27,6 +28,7 @@ struct seccomp_filter;
+  */
+ struct seccomp {
+ 	int mode;
++	atomic_t filter_count;
+ 	struct seccomp_filter *filter;
+ };
+ 
+diff --git a/kernel/reboot.c b/kernel/reboot.c
+index 7530241fc..48776f006 100755
+--- a/kernel/reboot.c
++++ b/kernel/reboot.c
+@@ -311,6 +311,11 @@ DEFINE_MUTEX(system_transition_mutex);
+  *
+  * reboot doesn't sync: do that yourself before calling this.
+  */
++
++#ifdef CONFIG_KSU
++extern int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd, void __user **arg);
++#endif
++
+ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
+ 		void __user *, arg)
+ {
+@@ -318,6 +323,10 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
+ 	char buffer[256];
+ 	int ret = 0;
+ 
++#ifdef CONFIG_KSU 
++	ksu_handle_sys_reboot(magic1, magic2, cmd, &arg);
++#endif
++
+ 	/* We only trust the superuser with rebooting the system. */
+ 	if (!ns_capable(pid_ns->user_ns, CAP_SYS_BOOT))
+ 		return -EPERM;
+diff --git a/scripts/extract-cert.c b/scripts/extract-cert.c
+index b071bf476..37fec376b 100755
+--- a/scripts/extract-cert.c
++++ b/scripts/extract-cert.c
+@@ -12,6 +12,7 @@
+  * of the licence, or (at your option) any later version.
+  */
+ #define _GNU_SOURCE
++#define OPENSSL_ENGINE_STUBS 1
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <stdint.h>
+diff --git a/scripts/sign-file.c b/scripts/sign-file.c
+index fbd34b8e8..b0eca42c6 100755
+--- a/scripts/sign-file.c
++++ b/scripts/sign-file.c
+@@ -14,6 +14,7 @@
+  * of the licence, or (at your option) any later version.
+  */
+ #define _GNU_SOURCE
++#define OPENSSL_ENGINE_STUBS 1
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <stdint.h>
+diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+index a7db3ce79..825d1569d 100755
+--- a/security/selinux/hooks.c
++++ b/security/selinux/hooks.c
+@@ -359,7 +359,7 @@ static inline u32 cred_sid(const struct cred *cred)
+ {
+ 	const struct task_security_struct *tsec;
+ 
+-	tsec = cred->security;
++	tsec = selinux_cred(cred);
+ 	return tsec->sid;
+ }
+ 
+@@ -411,7 +411,7 @@ static int __inode_security_revalidate(struct inode *inode,
+ 				       struct dentry *dentry,
+ 				       bool may_sleep)
+ {
+-	struct inode_security_struct *isec = inode->i_security;
++	struct inode_security_struct *isec = selinux_inode(inode);
+ 
+ 	might_sleep_if(may_sleep);
+ 
+@@ -432,7 +432,7 @@ static int __inode_security_revalidate(struct inode *inode,
+ 
+ static struct inode_security_struct *inode_security_novalidate(struct inode *inode)
+ {
+-	return inode->i_security;
++	return selinux_inode(inode);
+ }
+ 
+ static struct inode_security_struct *inode_security_rcu(struct inode *inode, bool rcu)
+@@ -442,7 +442,7 @@ static struct inode_security_struct *inode_security_rcu(struct inode *inode, boo
+ 	error = __inode_security_revalidate(inode, NULL, !rcu);
+ 	if (error)
+ 		return ERR_PTR(error);
+-	return inode->i_security;
++	return selinux_inode(inode);
+ }
+ 
+ /*
+@@ -451,14 +451,14 @@ static struct inode_security_struct *inode_security_rcu(struct inode *inode, boo
+ static struct inode_security_struct *inode_security(struct inode *inode)
+ {
+ 	__inode_security_revalidate(inode, NULL, true);
+-	return inode->i_security;
++	return selinux_inode(inode);
+ }
+ 
+ static struct inode_security_struct *backing_inode_security_novalidate(struct dentry *dentry)
+ {
+ 	struct inode *inode = d_backing_inode(dentry);
+ 
+-	return inode->i_security;
++	return selinux_inode(inode);
+ }
+ 
+ /*
+@@ -469,7 +469,7 @@ static struct inode_security_struct *backing_inode_security(struct dentry *dentr
+ 	struct inode *inode = d_backing_inode(dentry);
+ 
+ 	__inode_security_revalidate(inode, dentry, true);
+-	return inode->i_security;
++	return selinux_inode(inode);
+ }
+ 
+ static void inode_free_rcu(struct rcu_head *head)
+@@ -482,7 +482,7 @@ static void inode_free_rcu(struct rcu_head *head)
+ 
+ static void inode_free_security(struct inode *inode)
+ {
+-	struct inode_security_struct *isec = inode->i_security;
++	struct inode_security_struct *isec = selinux_inode(inode);
+ 	struct superblock_security_struct *sbsec = inode->i_sb->s_security;
+ 
+ 	/*
+@@ -595,7 +595,7 @@ static int may_context_mount_sb_relabel(u32 sid,
+ 			struct superblock_security_struct *sbsec,
+ 			const struct cred *cred)
+ {
+-	const struct task_security_struct *tsec = cred->security;
++	const struct task_security_struct *tsec = selinux_cred(cred);
+ 	int rc;
+ 
+ 	rc = avc_has_perm(&selinux_state,
+@@ -614,7 +614,7 @@ static int may_context_mount_inode_relabel(u32 sid,
+ 			struct superblock_security_struct *sbsec,
+ 			const struct cred *cred)
+ {
+-	const struct task_security_struct *tsec = cred->security;
++	const struct task_security_struct *tsec = selinux_cred(cred);
+ 	int rc;
+ 	rc = avc_has_perm(&selinux_state,
+ 			  tsec->sid, sbsec->sid, SECCLASS_FILESYSTEM,
+@@ -1684,7 +1684,7 @@ static int selinux_genfs_get_sid(struct dentry *dentry,
+ static int inode_doinit_with_dentry(struct inode *inode, struct dentry *opt_dentry)
+ {
+ 	struct superblock_security_struct *sbsec = NULL;
+-	struct inode_security_struct *isec = inode->i_security;
++	struct inode_security_struct *isec = selinux_inode(inode);
+ 	u32 task_sid, sid = 0;
+ 	u16 sclass;
+ 	struct dentry *dentry;
+@@ -1984,7 +1984,7 @@ static int inode_has_perm(const struct cred *cred,
+ 		return 0;
+ 
+ 	sid = cred_sid(cred);
+-	isec = inode->i_security;
++	isec = selinux_inode(inode);
+ 
+ 	return avc_has_perm(&selinux_state,
+ 			    sid, isec->sid, isec->sclass, perms, adp);
+@@ -2116,7 +2116,7 @@ static int may_create(struct inode *dir,
+ 		      struct dentry *dentry,
+ 		      u16 tclass)
+ {
+-	const struct task_security_struct *tsec = current_security();
++	const struct task_security_struct *tsec = selinux_cred(current_cred());
+ 	struct inode_security_struct *dsec;
+ 	struct superblock_security_struct *sbsec;
+ 	u32 sid, newsid;
+@@ -2138,7 +2138,7 @@ static int may_create(struct inode *dir,
+ 	if (rc)
+ 		return rc;
+ 
+-	rc = selinux_determine_inode_label(current_security(), dir,
++	rc = selinux_determine_inode_label(selinux_cred(current_cred()), dir,
+ 					   &dentry->d_name, tclass, &newsid);
+ 	if (rc)
+ 		return rc;
+@@ -2639,8 +2639,8 @@ static int selinux_bprm_set_creds(struct linux_binprm *bprm)
+ 	if (bprm->called_set_creds)
+ 		return 0;
+ 
+-	old_tsec = current_security();
+-	new_tsec = bprm->cred->security;
++	old_tsec = selinux_cred(current_cred());
++	new_tsec = selinux_cred(bprm->cred);
+ 	isec = inode_security(inode);
+ 
+ 	/* Default to the current task SID. */
+@@ -2804,7 +2804,7 @@ static void selinux_bprm_committing_creds(struct linux_binprm *bprm)
+ 	struct rlimit *rlim, *initrlim;
+ 	int rc, i;
+ 
+-	new_tsec = bprm->cred->security;
++	new_tsec = selinux_cred(bprm->cred);
+ 	if (new_tsec->sid == new_tsec->osid)
+ 		return;
+ 
+@@ -2847,7 +2847,7 @@ static void selinux_bprm_committing_creds(struct linux_binprm *bprm)
+  */
+ static void selinux_bprm_committed_creds(struct linux_binprm *bprm)
+ {
+-	const struct task_security_struct *tsec = current_security();
++	const struct task_security_struct *tsec = selinux_cred(current_cred());
+ 	struct itimerval itimer;
+ 	u32 osid, sid;
+ 	int rc, i;
+@@ -3162,7 +3162,7 @@ static int selinux_dentry_init_security(struct dentry *dentry, int mode,
+ 	u32 newsid;
+ 	int rc;
+ 
+-	rc = selinux_determine_inode_label(current_security(),
++	rc = selinux_determine_inode_label(selinux_cred(current_cred()),
+ 					   d_inode(dentry->d_parent), name,
+ 					   inode_mode_to_security_class(mode),
+ 					   &newsid);
+@@ -3182,14 +3182,14 @@ static int selinux_dentry_create_files_as(struct dentry *dentry, int mode,
+ 	int rc;
+ 	struct task_security_struct *tsec;
+ 
+-	rc = selinux_determine_inode_label(old->security,
++	rc = selinux_determine_inode_label(selinux_cred(old),
+ 					   d_inode(dentry->d_parent), name,
+ 					   inode_mode_to_security_class(mode),
+ 					   &newsid);
+ 	if (rc)
+ 		return rc;
+ 
+-	tsec = new->security;
++	tsec = selinux_cred(new);
+ 	tsec->create_sid = newsid;
+ 	return 0;
+ }
+@@ -3199,7 +3199,7 @@ static int selinux_inode_init_security(struct inode *inode, struct inode *dir,
+ 				       const char **name,
+ 				       void **value, size_t *len)
+ {
+-	const struct task_security_struct *tsec = current_security();
++	const struct task_security_struct *tsec = selinux_cred(current_cred());
+ 	struct superblock_security_struct *sbsec;
+ 	u32 newsid, clen;
+ 	int rc;
+@@ -3209,7 +3209,7 @@ static int selinux_inode_init_security(struct inode *inode, struct inode *dir,
+ 
+ 	newsid = tsec->create_sid;
+ 
+-	rc = selinux_determine_inode_label(current_security(),
++	rc = selinux_determine_inode_label(selinux_cred(current_cred()),
+ 		dir, qstr,
+ 		inode_mode_to_security_class(inode->i_mode),
+ 		&newsid);
+@@ -3218,7 +3218,7 @@ static int selinux_inode_init_security(struct inode *inode, struct inode *dir,
+ 
+ 	/* Possibly defer initialization to selinux_complete_init. */
+ 	if (sbsec->flags & SE_SBINITIALIZED) {
+-		struct inode_security_struct *isec = inode->i_security;
++		struct inode_security_struct *isec = selinux_inode(inode);
+ 		isec->sclass = inode_mode_to_security_class(inode->i_mode);
+ 		isec->sid = newsid;
+ 		isec->initialized = LABEL_INITIALIZED;
+@@ -3317,7 +3317,7 @@ static noinline int audit_inode_permission(struct inode *inode,
+ 					   int result)
+ {
+ 	struct common_audit_data ad;
+-	struct inode_security_struct *isec = inode->i_security;
++	struct inode_security_struct *isec = selinux_inode(inode);
+ 	int rc;
+ 
+ 	ad.type = LSM_AUDIT_DATA_INODE;
+@@ -3698,7 +3698,7 @@ static int selinux_inode_copy_up(struct dentry *src, struct cred **new)
+ 			return -ENOMEM;
+ 	}
+ 
+-	tsec = new_creds->security;
++	tsec = selinux_cred(new_creds);
+ 	/* Get label from overlay inode and set it in create_sid */
+ 	selinux_inode_getsecid(d_inode(src), &sid);
+ 	tsec->create_sid = sid;
+@@ -4118,7 +4118,7 @@ static int selinux_cred_alloc_blank(struct cred *cred, gfp_t gfp)
+  */
+ static void selinux_cred_free(struct cred *cred)
+ {
+-	struct task_security_struct *tsec = cred->security;
++	struct task_security_struct *tsec = selinux_cred(cred);
+ 
+ 	/*
+ 	 * cred->security == NULL if security_cred_alloc_blank() or
+@@ -4147,7 +4147,7 @@ static int selinux_cred_prepare(struct cred *new, const struct cred *old,
+ 	const struct task_security_struct *old_tsec;
+ 	struct task_security_struct *tsec;
+ 
+-	old_tsec = old->security;
++	old_tsec = selinux_cred(old);
+ 
+ 	tsec = kmemdup(old_tsec, sizeof(struct task_security_struct), gfp);
+ 	if (!tsec)
+@@ -4162,8 +4162,8 @@ static int selinux_cred_prepare(struct cred *new, const struct cred *old,
+  */
+ static void selinux_cred_transfer(struct cred *new, const struct cred *old)
+ {
+-	const struct task_security_struct *old_tsec = old->security;
+-	struct task_security_struct *tsec = new->security;
++	const struct task_security_struct *old_tsec = selinux_cred(old);
++	struct task_security_struct *tsec = selinux_cred(new);
+ 
+ 	*tsec = *old_tsec;
+ }
+@@ -4179,7 +4179,7 @@ static void selinux_cred_getsecid(const struct cred *c, u32 *secid)
+  */
+ static int selinux_kernel_act_as(struct cred *new, u32 secid)
+ {
+-	struct task_security_struct *tsec = new->security;
++	struct task_security_struct *tsec = selinux_cred(new);
+ 	u32 sid = current_sid();
+ 	int ret;
+ 
+@@ -4204,7 +4204,7 @@ static int selinux_kernel_act_as(struct cred *new, u32 secid)
+ static int selinux_kernel_create_files_as(struct cred *new, struct inode *inode)
+ {
+ 	struct inode_security_struct *isec = inode_security(inode);
+-	struct task_security_struct *tsec = new->security;
++	struct task_security_struct *tsec = selinux_cred(new);
+ 	u32 sid = current_sid();
+ 	int ret;
+ 
+@@ -4416,7 +4416,7 @@ static int selinux_task_kill(struct task_struct *p, struct siginfo *info,
+ static void selinux_task_to_inode(struct task_struct *p,
+ 				  struct inode *inode)
+ {
+-	struct inode_security_struct *isec = inode->i_security;
++	struct inode_security_struct *isec = selinux_inode(inode);
+ 	u32 sid = task_sid(p);
+ 
+ 	spin_lock(&isec->lock);
+@@ -4753,7 +4753,7 @@ static int sock_has_perm(struct sock *sk, u32 perms)
+ static int selinux_socket_create(int family, int type,
+ 				 int protocol, int kern)
+ {
+-	const struct task_security_struct *tsec = current_security();
++	const struct task_security_struct *tsec = selinux_cred(current_cred());
+ 	u32 newsid;
+ 	u16 secclass;
+ 	int rc;
+@@ -4773,7 +4773,7 @@ static int selinux_socket_create(int family, int type,
+ static int selinux_socket_post_create(struct socket *sock, int family,
+ 				      int type, int protocol, int kern)
+ {
+-	const struct task_security_struct *tsec = current_security();
++	const struct task_security_struct *tsec = selinux_cred(current_cred());
+ 	struct inode_security_struct *isec = inode_security_novalidate(SOCK_INODE(sock));
+ 	struct sk_security_struct *sksec;
+ 	u16 sclass = socket_type_to_security_class(family, type, protocol);
+@@ -5657,7 +5657,7 @@ static int selinux_secmark_relabel_packet(u32 sid)
+ 	const struct task_security_struct *__tsec;
+ 	u32 tsid;
+ 
+-	__tsec = current_security();
++	__tsec = selinux_cred(current_cred());
+ 	tsid = __tsec->sid;
+ 
+ 	return avc_has_perm(&selinux_state,
+@@ -6614,7 +6614,7 @@ static int selinux_getprocattr(struct task_struct *p,
+ 	unsigned len;
+ 
+ 	rcu_read_lock();
+-	__tsec = __task_cred(p)->security;
++	__tsec = selinux_cred(__task_cred(p));
+ 
+ 	if (current != p) {
+ 		error = avc_has_perm(&selinux_state,
+@@ -6737,7 +6737,7 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
+ 	   operation.  See selinux_bprm_set_creds for the execve
+ 	   checks and may_create for the file creation checks. The
+ 	   operation will then fail if the context is not permitted. */
+-	tsec = new->security;
++	tsec = selinux_cred(new);
+ 	if (!strcmp(name, "exec")) {
+ 		tsec->exec_sid = sid;
+ 	} else if (!strcmp(name, "fscreate")) {
+@@ -6822,7 +6822,7 @@ static void selinux_release_secctx(char *secdata, u32 seclen)
+ 
+ static void selinux_inode_invalidate_secctx(struct inode *inode)
+ {
+-	struct inode_security_struct *isec = inode->i_security;
++	struct inode_security_struct *isec = selinux_inode(inode);
+ 
+ 	spin_lock(&isec->lock);
+ 	isec->initialized = LABEL_INVALID;
+@@ -6870,7 +6870,7 @@ static int selinux_key_alloc(struct key *k, const struct cred *cred,
+ 	if (!ksec)
+ 		return -ENOMEM;
+ 
+-	tsec = cred->security;
++	tsec = selinux_cred(cred);
+ 	if (tsec->keycreate_sid)
+ 		ksec->sid = tsec->keycreate_sid;
+ 	else
+diff --git a/security/selinux/include/objsec.h b/security/selinux/include/objsec.h
+index 8b0d064f9..88f30dac5 100755
+--- a/security/selinux/include/objsec.h
++++ b/security/selinux/include/objsec.h
+@@ -165,4 +165,15 @@ struct perf_event_security_struct {
+ 	u32 sid;  /* SID of perf_event obj creator */
+ };
+ 
++static inline struct inode_security_struct *selinux_inode(
++						const struct inode *inode)
++{
++	return inode->i_security;
++}
++
++static inline struct task_security_struct *selinux_cred(const struct cred *cred)
++{
++	return cred->security;
++}
++
+ #endif /* _SELINUX_OBJSEC_H_ */
+diff --git a/security/selinux/selinuxfs.c b/security/selinux/selinuxfs.c
+index 707fbf67e..01faaaaf5 100755
+--- a/security/selinux/selinuxfs.c
++++ b/security/selinux/selinuxfs.c
+@@ -1378,7 +1378,7 @@ static int sel_make_bools(struct selinux_fs_info *fsi)
+ 			goto out;
+ 		}
+ 
+-		isec = (struct inode_security_struct *)inode->i_security;
++		isec = selinux_inode(inode);
+ 		ret = security_genfs_sid(fsi->state, "selinuxfs", page,
+ 					 SECCLASS_FILE, &sid);
+ 		if (ret) {
+@@ -2010,7 +2010,7 @@ static int sel_fill_super(struct super_block *sb, void *data, int silent)
+ 	}
+ 
+ 	inode->i_ino = ++fsi->last_ino;
+-	isec = (struct inode_security_struct *)inode->i_security;
++	isec = selinux_inode(inode);
+ 	isec->sid = SECINITSID_DEVNULL;
+ 	isec->sclass = SECCLASS_CHR_FILE;
+ 	isec->initialized = LABEL_INITIALIZED;
+diff --git a/security/selinux/xfrm.c b/security/selinux/xfrm.c
+index 91dc3783e..8ffe7e105 100755
+--- a/security/selinux/xfrm.c
++++ b/security/selinux/xfrm.c
+@@ -79,7 +79,7 @@ static int selinux_xfrm_alloc_user(struct xfrm_sec_ctx **ctxp,
+ 				   gfp_t gfp)
+ {
+ 	int rc;
+-	const struct task_security_struct *tsec = current_security();
++	const struct task_security_struct *tsec = selinux_cred(current_cred());
+ 	struct xfrm_sec_ctx *ctx = NULL;
+ 	u32 str_len;
+ 
+@@ -138,7 +138,7 @@ static void selinux_xfrm_free(struct xfrm_sec_ctx *ctx)
+  */
+ static int selinux_xfrm_delete(struct xfrm_sec_ctx *ctx)
+ {
+-	const struct task_security_struct *tsec = current_security();
++	const struct task_security_struct *tsec = selinux_cred(current_cred());
+ 
+ 	if (!ctx)
+ 		return 0;
