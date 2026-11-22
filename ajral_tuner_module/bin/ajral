@@ -203,11 +203,15 @@ profile() {
       setconf cpu_max_all 0
       setconf min0 979200;     setconf min4 1286400;    setconf min7 1401600
       setconf gpu_gov msm-adreno-tz; setconf gpu_max_pwr 0
-      setconf swappiness 100;  setconf vfs_cache_pressure 60
-      setconf ksm_run 0;       setconf readahead_sda 1024; setconf readahead_mmc 1024
+      # RAM: profil game justru harus paling hemat RAM — latar didorong ke zram
+      setconf swappiness 180;  setconf vfs_cache_pressure 120
+      setconf ksm_run 1;       setconf readahead_sda 1024; setconf readahead_mmc 1024
       setconf burst_penalty_scale 1024; setconf burst_penalty_offset 28
       setconf sched_boost 2;   setconf stune_top 8
       setconf sched_sda deadline; setconf sched_mmc bfq
+      # KSM lebih agresif saat profil game dipilih
+      wr /sys/kernel/mm/ksm/pages_to_scan 512
+      wr /sys/kernel/mm/ksm/sleep_millisecs 100
       ;;
     *) echo "profil tidak dikenal"; return 1 ;;
   esac
