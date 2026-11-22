@@ -219,6 +219,29 @@ case "$1" in
   info)    info ;;
   apply)   apply_all; echo ok ;;
   profile) profile "$2" ;;
+  boost)
+    # Bebaskan RAM sebelum main game:
+    #  - matikan app latar yang tidak perlu
+    #  - lepas file cache
+    #  - dorong halaman anon ke zram (swappiness tinggi)
+    for p in com.google.android.youtube com.google.android.gm com.android.videos \
+             com.android.chrome com.android.vending com.google.android.googlequicksearchbox \
+             com.microsoft.appmanager com.sec.android.app.myfiles com.samsung.android.lool \
+             com.samsung.android.app.tips com.samsung.android.easysetup \
+             com.facebook.katana com.instagram.android com.spotify.music; do
+      am force-stop "$p" >/dev/null 2>&1
+    done
+    am kill-all >/dev/null 2>&1
+    sync
+    wr /proc/sys/vm/drop_caches 3
+    wr /proc/sys/vm/swappiness 180
+    wr /sys/kernel/mm/ksm/run 1
+    wr /sys/kernel/mm/ksm/pages_to_scan 512
+    wr /sys/kernel/mm/ksm/sleep_millisecs 100
+    # catat supaya tetap berlaku setelah reboot
+    setconf swappiness 180
+    echo "ok $(grep MemAvailable /proc/meminfo | tr -s ' ' | cut -d' ' -f2) kB tersedia"
+    ;;
   set)
     k=$2; v=$3
     case "$k" in

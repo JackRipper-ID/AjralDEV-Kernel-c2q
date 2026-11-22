@@ -390,6 +390,12 @@
         <button class="btn" data-profile="perf"><span class="big">🚀</span>Performa<span class="small">maks, panas</span></button>
       </div>
       <div class="hint">Profil menulis sekumpulan nilai sekaligus (CPU, GPU, memori, I/O). Semua tersimpan dan diterapkan ulang tiap boot.</div>
+      <div style="height:12px"></div>
+      <button class="btn" id="btn-boost" style="width:100%;padding:14px">
+        <span class="big" style="display:inline;font-size:16px;margin-right:6px">🧹</span>
+        Bebaskan RAM untuk gaming
+        <span class="small" style="display:block;font-size:10px;opacity:.7;margin-top:2px">tutup app latar + lepas cache + dorong ke zram</span>
+      </button>
     </div>
   </details>
 
@@ -1131,6 +1137,20 @@ document.querySelectorAll("[data-profile]").forEach(b => {
 $("btn-save").addEventListener("click", save);
 $("btn-raw").addEventListener("click", async () => { await reload(); });
 $("btn-diag").addEventListener("click", runDiag);
+
+/* ---------- tombol boost RAM ---------- */
+
+$("btn-boost").addEventListener("click", async () => {
+  toast("Membersihkan RAM...");
+  const r = String(await ajral("boost")).trim();
+  if (r.indexOf("ok") >= 0) {
+    const kb = parseInt(r.split(/\s+/)[1], 10) || 0;
+    await loadInfo(); syncUI();
+    toast("RAM dibebaskan — " + (kb / 1048576).toFixed(1) + " GB tersedia");
+  } else {
+    toast("Gagal membersihkan RAM", true);
+  }
+});
 
 /* ---------- navigasi tab ala aplikasi ---------- */
 
