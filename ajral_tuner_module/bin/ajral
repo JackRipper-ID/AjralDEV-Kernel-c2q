@@ -1,0 +1,244 @@
+#!/system/bin/sh
+# AjralDEV Kernel Tuner - engine
+# Dipanggil oleh WebUI (KernelSU) dan service.sh saat boot.
+
+BIN=$(cd "${0%/*}" 2>/dev/null && pwd)
+MODDIR=$(dirname "$BIN")
+CONF=/data/adb/ajral_tuner/config.conf
+mkdir -p /data/adb/ajral_tuner 2>/dev/null
+
+wr() { [ -e "$1" ] && echo "$2" > "$1" 2>/dev/null; }
+rd() { [ -e "$1" ] && cat "$1" 2>/dev/null; }
+
+C0="0 1 2 3"
+C4="4 5 6"
+C7="7"
+
+setmax() {
+  # Samsung: scaling_max_freq read-only, limit global via /sys/power/cpufreq_max_limit
+  # 0 = batas penuh
+  wr /sys/power/cpufreq_max_limit "$2"
+}
+setmin() {
+  for c in $1; do
+    d=/sys/devices/system/cpu/cpu$c/cpufreq
+    wr $d/scaling_min_freq "$2"
+  done
+}
+setgov() {
+  for c in $1; do wr /sys/devices/system/cpu/cpu$c/cpufreq/scaling_governor "$2"; done
+}
+
+GPU=/sys/class/kgsl/kgsl-3d0
+SDA=/sys/block/sda/queue
+MMC=/sys/block/mmcblk0/queue
+
+apply_key() {
+  k=$1; v=$2
+  case "$k" in
+    bore_enable)                   wr /proc/sys/kernel/sched_bore "$v" ;;
+    burst_penalty_offset)          wr /proc/sys/kernel/sched_burst_penalty_offset "$v" ;;
+    burst_penalty_scale)           wr /proc/sys/kernel/sched_burst_penalty_scale "$v" ;;
+    burst_smoothness_long)         wr /proc/sys/kernel/sched_burst_smoothness_long "$v" ;;
+    burst_smoothness_short)        wr /proc/sys/kernel/sched_burst_smoothness_short "$v" ;;
+    burst_cache_lifetime)          wr /proc/sys/kernel/sched_burst_cache_lifetime "$v" ;;
+    burst_fork_atavistic)          wr /proc/sys/kernel/sched_burst_fork_atavistic "$v" ;;
+    gov0)                          setgov "$C0" "$v" ;;
+    gov4)                          setgov "$C4" "$v" ;;
+    gov7)                          setgov "$C7" "$v" ;;
+    max0)                          setmax "$C0" "$v" ;;
+    min0)                          setmin "$C0" "$v" ;;
+    max4)                          setmax "$C4" "$v" ;;
+    min4)                          setmin "$C4" "$v" ;;
+    max7)                          setmax "$C7" "$v" ;;
+    min7)                          setmin "$C7" "$v" ;;
+    cpu_max_all)                   setmax "" "$v" ;;
+    gpu_gov)                       wr $GPU/devfreq/governor "$v" ;;
+    gpu_max_pwr)                   wr $GPU/max_pwrlevel "$v" ;;
+    gpu_min_pwr)                   wr $GPU/min_pwrlevel "$v" ;;
+    swappiness)                    wr /proc/sys/vm/swappiness "$v" ;;
+    vfs_cache_pressure)            wr /proc/sys/vm/vfs_cache_pressure "$v" ;;
+    dirty_ratio)                   wr /proc/sys/vm/dirty_ratio "$v" ;;
+    dirty_bg_ratio)                wr /proc/sys/vm/dirty_background_ratio "$v" ;;
+    min_free_kbytes)               wr /proc/sys/vm/min_free_kbytes "$v" ;;
+    ksm_run)                       wr /sys/kernel/mm/ksm/run "$v" ;;
+    sched_boost)                   wr /proc/sys/kernel/sched_boost "$v" ;;
+    stune_top)                     wr /dev/stune/top-app/schedtune.boost "$v" ;;
+    sched_sda)                     wr $SDA/scheduler "$v" ;;
+    readahead_sda)                 wr $SDA/read_ahead_kb "$v" ;;
+    sched_mmc)                     wr $MMC/scheduler "$v" ;;
+    readahead_mmc)                 wr $MMC/read_ahead_kb "$v" ;;
+    tcp_cc)                        wr /proc/sys/net/ipv4/tcp_congestion_control "$v" ;;
+  esac
+}
+
+setconf() {
+  k=$1; v=$2
+  [ -f "$CONF" ] || : > "$CONF"
+  if grep -q "^$k=" "$CONF" 2>/dev/null; then
+    sed -i "s|^$k=.*|$k=$v|" "$CONF" 2>/dev/null
+  else
+    echo "$k=$v" >> "$CONF"
+  fi
+}
+
+apply_all() {
+  [ -f "$CONF" ] || return 0
+  while IFS='=' read -r k v; do
+    [ -z "$k" ] && continue
+    apply_key "$k" "$v"
+  done < "$CONF"
+}
+
+tzval() {
+  for z in /sys/class/thermal/thermal_zone*; do
+    [ "$(rd $z/type)" = "$1" ] && { rd $z/temp; return; }
+  done
+}
+
+info() {
+  echo "kernel=$(uname -r)"
+  echo "uptime=$(cut -d. -f1 /proc/uptime)"
+  echo "load1=$(cut -d' ' -f1 /proc/loadavg)"
+  echo "mem_total_kb=$(awk '/MemTotal/{print $2}' /proc/meminfo)"
+  echo "mem_avail_kb=$(awk '/MemAvailable/{print $2}' /proc/meminfo)"
+  echo "temp_batt=$(rd /sys/class/power_supply/battery/temp)"
+  echo "temp_cpu0=$(tzval cpu-0-0-usr)"
+  echo "temp_cpu4=$(tzval cpu-1-3-usr)"
+  echo "temp_cpu7=$(tzval cpu-1-7-usr)"
+  echo "temp_gpu=$(tzval gpuss-0-usr)"
+
+  echo "bore_ok=$([ -e /proc/sys/kernel/sched_bore ] && echo 1 || echo 0)"
+  echo "bore_enable=$(rd /proc/sys/kernel/sched_bore)"
+  echo "burst_penalty_offset=$(rd /proc/sys/kernel/sched_burst_penalty_offset)"
+  echo "burst_penalty_scale=$(rd /proc/sys/kernel/sched_burst_penalty_scale)"
+  echo "burst_smoothness_long=$(rd /proc/sys/kernel/sched_burst_smoothness_long)"
+  echo "burst_smoothness_short=$(rd /proc/sys/kernel/sched_burst_smoothness_short)"
+  echo "burst_cache_lifetime=$(rd /proc/sys/kernel/sched_burst_cache_lifetime)"
+  echo "burst_fork_atavistic=$(rd /proc/sys/kernel/sched_burst_fork_atavistic)"
+
+  echo "freq0_list=$(rd /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies)"
+  echo "freq4_list=$(rd /sys/devices/system/cpu/cpu4/cpufreq/scaling_available_frequencies)"
+  echo "freq7_list=$(rd /sys/devices/system/cpu/cpu7/cpufreq/scaling_available_frequencies)"
+  echo "gov0_list=$(rd /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors)"
+  echo "gov4_list=$(rd /sys/devices/system/cpu/cpu4/cpufreq/scaling_available_governors)"
+  echo "gov7_list=$(rd /sys/devices/system/cpu/cpu7/cpufreq/scaling_available_governors)"
+  echo "gov0=$(rd /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)"
+  echo "gov4=$(rd /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor)"
+  echo "gov7=$(rd /sys/devices/system/cpu/cpu7/cpufreq/scaling_governor)"
+  echo "min0=$(rd /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq)"
+  echo "max0=$(rd /sys/power/cpufreq_max_limit)"
+  echo "cur0=$(rd /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq)"
+  echo "min4=$(rd /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq)"
+  echo "max4=$(rd /sys/power/cpufreq_max_limit)"
+  echo "cur4=$(rd /sys/devices/system/cpu/cpu4/cpufreq/scaling_cur_freq)"
+  echo "min7=$(rd /sys/devices/system/cpu/cpu7/cpufreq/scaling_min_freq)"
+  echo "max7=$(rd /sys/power/cpufreq_max_limit)"
+  echo "cur7=$(rd /sys/devices/system/cpu/cpu7/cpufreq/scaling_cur_freq)"
+
+  echo "gpu_gov=$(rd $GPU/devfreq/governor)"
+  echo "gpu_govs=$(rd $GPU/devfreq/available_governors)"
+  echo "gpu_freqs=$(rd $GPU/gpu_available_frequencies)"
+  echo "gpu_max_pwr=$(rd $GPU/max_pwrlevel)"
+  echo "gpu_min_pwr=$(rd $GPU/min_pwrlevel)"
+  echo "gpu_num_pwr=$(rd $GPU/num_pwrlevels)"
+  echo "gpu_cur_mhz=$(rd $GPU/gpuclk 2>/dev/null || rd $GPU/devfreq/cur_freq)"
+
+  echo "swappiness=$(rd /proc/sys/vm/swappiness)"
+  echo "vfs_cache_pressure=$(rd /proc/sys/vm/vfs_cache_pressure)"
+  echo "dirty_ratio=$(rd /proc/sys/vm/dirty_ratio)"
+  echo "dirty_bg_ratio=$(rd /proc/sys/vm/dirty_background_ratio)"
+  echo "min_free_kbytes=$(rd /proc/sys/vm/min_free_kbytes)"
+  echo "ksm_run=$(rd /sys/kernel/mm/ksm/run)"
+
+  echo "sched_boost=$(rd /proc/sys/kernel/sched_boost)"
+  echo "stune_top=$(rd /dev/stune/top-app/schedtune.boost)"
+  echo "sched_sda=$(rd $SDA/scheduler)"
+  echo "readahead_sda=$(rd $SDA/read_ahead_kb)"
+  echo "sched_mmc=$(rd $MMC/scheduler)"
+  echo "readahead_mmc=$(rd $MMC/read_ahead_kb)"
+  echo "tcp_cc=$(rd /proc/sys/net/ipv4/tcp_congestion_control)"
+  echo "tcp_avail=$(rd /proc/sys/net/ipv4/tcp_available_congestion_control)"
+}
+
+profile() {
+  case "$1" in
+    battery)
+      setconf gov0 schedutil;  setconf gov4 schedutil;  setconf gov7 schedutil
+      setconf cpu_max_all 1804800
+      setconf min0 300000;     setconf min4 710400;     setconf min7 844800
+      setconf gpu_gov msm-adreno-tz; setconf gpu_max_pwr 3
+      setconf swappiness 100;  setconf vfs_cache_pressure 100
+      setconf ksm_run 1;       setconf readahead_sda 128; setconf readahead_mmc 128
+      setconf burst_penalty_scale 1280; setconf burst_penalty_offset 22
+      setconf sched_boost 0;   setconf stune_top 1
+      setconf sched_sda deadline; setconf sched_mmc bfq
+      ;;
+    balanced)
+      setconf gov0 schedutil;  setconf gov4 schedutil;  setconf gov7 schedutil
+      setconf cpu_max_all 0
+      setconf min0 691200;     setconf min4 710400;     setconf min7 844800
+      setconf gpu_gov msm-adreno-tz; setconf gpu_max_pwr 0
+      setconf swappiness 130;  setconf vfs_cache_pressure 80
+      setconf ksm_run 0;       setconf readahead_sda 512; setconf readahead_mmc 512
+      setconf burst_penalty_scale 1280; setconf burst_penalty_offset 22
+      setconf sched_boost 1;   setconf stune_top 5
+      setconf sched_sda deadline; setconf sched_mmc bfq
+      ;;
+    perf)
+      setconf gov0 performance; setconf gov4 performance; setconf gov7 performance
+      setconf cpu_max_all 0
+      setconf min0 979200;     setconf min4 1286400;    setconf min7 1401600
+      setconf gpu_gov performance; setconf gpu_max_pwr 0
+      setconf swappiness 160;  setconf vfs_cache_pressure 50
+      setconf ksm_run 0;       setconf readahead_sda 1024; setconf readahead_mmc 1024
+      setconf burst_penalty_scale 1024; setconf burst_penalty_offset 28
+      setconf sched_boost 2;   setconf stune_top 10
+      setconf sched_sda deadline; setconf sched_mmc bfq
+      ;;
+    game)
+      # performa tinggi tapi suhu dikendalikan: governor tetap schedutil
+      # supaya clock turun di sela frame (tidak panas terus seperti perf)
+      setconf gov0 schedutil; setconf gov4 schedutil; setconf gov7 schedutil
+      setconf cpu_max_all 0
+      setconf min0 979200;     setconf min4 1286400;    setconf min7 1401600
+      setconf gpu_gov msm-adreno-tz; setconf gpu_max_pwr 0
+      setconf swappiness 100;  setconf vfs_cache_pressure 60
+      setconf ksm_run 0;       setconf readahead_sda 1024; setconf readahead_mmc 1024
+      setconf burst_penalty_scale 1024; setconf burst_penalty_offset 28
+      setconf sched_boost 2;   setconf stune_top 8
+      setconf sched_sda deadline; setconf sched_mmc bfq
+      ;;
+    *) echo "profil tidak dikenal"; return 1 ;;
+  esac
+  apply_all
+  echo "ok"
+}
+
+case "$1" in
+  info)    info ;;
+  apply)   apply_all; echo ok ;;
+  profile) profile "$2" ;;
+  set)
+    k=$2; v=$3
+    case "$k" in
+      bore_enable|burst_penalty_offset|burst_penalty_scale|burst_smoothness_long|\
+      burst_smoothness_short|burst_cache_lifetime|burst_fork_atavistic|gov0|gov4|gov7|\
+      max0|min0|max4|min4|max7|min7|cpu_max_all|gpu_gov|gpu_max_pwr|gpu_min_pwr|swappiness|\
+      vfs_cache_pressure|dirty_ratio|dirty_bg_ratio|min_free_kbytes|ksm_run|\
+      sched_boost|stune_top|sched_sda|readahead_sda|sched_mmc|readahead_mmc|tcp_cc)
+        setconf "$k" "$v"
+        apply_key "$k" "$v"
+        echo ok
+        ;;
+      *) echo "key tidak valid: $k"; exit 1 ;;
+    esac
+    ;;
+  reset)
+    rm -f "$CONF"
+    echo ok
+    ;;
+  *)
+    echo "pemakaian: ajral {info|apply|profile <battery|balanced|perf>|set <key> <val>|reset}"
+    ;;
+esac

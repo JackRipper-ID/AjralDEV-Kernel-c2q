@@ -143,6 +143,24 @@ All built in (`=y`). No modules, no signing, no compile step on device.
 | [`AjralDEV-Kernel-c2q-4.19.113-AjralDEV-BORE-KSUNext-NetHunter.zip`](https://github.com/JackRipper-ID/AjralDEV-Kernel-c2q/releases/latest) | 21,508,992 B | `e498fd35bd3c10caa3a4ca6e83a7b199e19bf923a920d18d8550a9c5bbd4ca2d` |
 | [`Image`](https://github.com/JackRipper-ID/AjralDEV-Kernel-c2q/releases/latest) | 55,459,852 B | `89b3a1dbc6ebfd40b2e6952fb6be5033d6f915b4ae672e9f3d257f7db7b1ec01` |
 | [`dtb`](https://github.com/JackRipper-ID/AjralDEV-Kernel-c2q/releases/latest) | 1,580,275 B | `db077314559f25032c4ef178a30089067155fd4ded5417aed4dc75d09fd25a82` |
+| [`AjralTuner-ksu-module.zip`](https://github.com/JackRipper-ID/AjralDEV-Kernel-c2q/releases/latest) — KernelSU Next WebUI tuner | — | — |
+
+---
+
+## 🎛 Companion module — AjralDEV Kernel Tuner
+
+A KernelSU Next module that tunes this kernel from a WebUI: BORE parameters, CPU/GPU governors and limits, memory, I/O and network — persisted to `/data/adb/ajral_tuner/config.conf` and re-applied by `service.sh` at every boot. No app, no kernel rebuild.
+
+| Profile | Behaviour |
+|:--|:--|
+| 🔋 **Battery** | schedutil, CPU capped at 1,804,800 kHz, GPU level 3, KSM on |
+| ⚖️ **Balanced** | schedutil, no CPU cap, GPU level 0, KSM off |
+| 🎮 **Game** | schedutil with raised floors, `sched_boost` 2, `stune.top-app` 8 — high FPS without the sustained heat of a full performance lock |
+| 🚀 **Performance** | performance governors, GPU unbound, maximum throughput |
+
+It also reports live temperatures (battery / CPU / GPU), free RAM, load average and the top CPU consumers.
+
+Source: [`ajral_tuner_module/`](ajral_tuner_module/) · Docs: [`ajral_tuner_module/README.md`](ajral_tuner_module/README.md)
 
 ---
 

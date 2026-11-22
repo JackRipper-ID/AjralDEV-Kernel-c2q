@@ -1,0 +1,6 @@
+id=ajral_tuner
+name=AjralDEV Kernel Tuner
+version=v1.0.0
+versionCode=100
+author=AjralDEV
+description=Panel tuning kernel lewat WebUI KernelSU: BORE, CPU/GPU, memori, I/O, jaringan. Setelan tersimpan dan diterapkan tiap boot.

@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AjralDEV Kernel Tuner</title>
+<style>
+  :root{
+    --bg:#070b10; --card:rgba(20,27,37,.72); --card2:#1a2330; --line:rgba(120,160,200,.14);
+    --txt:#eaf2fa; --dim:#8aa0b8; --acc:#38bdf8; --acc2:#818cf8; --acc3:#22d3ee;
+    --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --radius:18px;
+    --glow:0 8px 32px -8px rgba(56,189,248,.45);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,"Roboto","Segoe UI",system-ui,sans-serif;
+    font-size:15px;line-height:1.45;overscroll-behavior:none}
+  body{padding:0 0 96px;background-image:
+      radial-gradient(60% 40% at 85% -5%, rgba(56,189,248,.13), transparent 60%),
+      radial-gradient(50% 35% at -10% 30%, rgba(129,140,248,.10), transparent 60%),
+      radial-gradient(45% 30% at 50% 105%, rgba(34,211,238,.07), transparent 60%);
+    background-attachment:fixed}
+
+  header{
+    position:sticky;top:0;z-index:20;
+    background:linear-gradient(165deg,rgba(16,24,35,.92) 0%,rgba(7,11,16,.96) 100%);
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border-bottom:1px solid var(--line);
+    padding:18px 18px 14px;
+  }
+  .hrow{display:flex;align-items:center;gap:13px}
+  .logo{
+    width:46px;height:46px;border-radius:14px;flex:0 0 46px;
+    background:conic-gradient(from 210deg,var(--acc),var(--acc2),var(--acc3),var(--acc));
+    display:grid;place-items:center;font-weight:900;font-size:20px;color:#031018;
+    box-shadow:var(--glow);position:relative;
+  }
+  .logo::after{content:"";position:absolute;inset:0;border-radius:inherit;
+    border:1px solid rgba(255,255,255,.35)}
+  h1{font-size:16px;margin:0;font-weight:800;letter-spacing:.3px}
+  h1 span{background:linear-gradient(90deg,var(--acc),var(--acc2));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{font-size:11px;color:var(--dim);margin-top:3px;font-variant-numeric:tabular-nums;
+    display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .sub .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);
+    box-shadow:0 0 8px var(--ok);display:inline-block;animation:pulse 2.4s infinite;flex:0 0 6px}
+  .sub.err .dot{background:var(--bad);box-shadow:0 0 8px var(--bad);animation:none}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .stat{min-width:0}
+  .stat{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:9px 11px;flex:0 0 auto;position:relative;overflow:hidden;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  }
+  .stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:var(--acc);opacity:.85}
+  .stat.ok::before{background:var(--ok)} .stat.warn::before{background:var(--warn)}
+  .stat.bad::before{background:var(--bad)}
+  .stat .k{font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+  .stat .v{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px;
+    letter-spacing:.3px}
+  .stat.ok .v{color:var(--ok)} .stat.warn .v{color:var(--warn)} .stat.bad .v{color:var(--bad)}
+  .loadbar{height:3px;border-radius:99px;background:#22303f;margin-top:6px;overflow:hidden}
+  .loadbar i{display:block;height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,var(--ok),var(--warn),var(--bad));transition:width .6s}
+
+  main{padding:14px 14px 0}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    margin-bottom:13px;overflow:hidden;
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    box-shadow:0 4px 24px -12px rgba(0,0,0,.7);
+  }
+  .card>summary{
+    list-style:none;cursor:pointer;padding:15px 16px;
+    display:flex;align-items:center;gap:12px;font-weight:700;font-size:14px;
+    user-select:none;
+  }
+  .card>summary::-webkit-details-marker{display:none}
+  .card>summary .ico{
+    width:34px;height:34px;border-radius:11px;font-size:16px;flex:0 0 34px;
+    display:grid;place-items:center;
+    background:linear-gradient(140deg,rgba(56,189,248,.16),rgba(129,140,248,.16));
+    border:1px solid rgba(120,170,220,.22);
+  }
+  .card>summary .chev{margin-left:auto;color:var(--dim);transition:transform .25s;font-size:11px}
+  .card[open]>summary .chev{transform:rotate(90deg);color:var(--acc)}
+  .card[open]>summary{border-bottom:1px solid var(--line)}
+  .body{padding:16px 16px 18px}
+
+  .field{margin-bottom:18px}
+  .field:last-child{margin-bottom:0}
+  .lab{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+  .lab .n{font-size:13px;font-weight:650}
+  .lab .v{font-size:12.5px;color:var(--acc3);font-variant-numeric:tabular-nums;font-weight:800;
+    background:rgba(34,211,238,.10);border:1px solid rgba(34,211,238,.22);
+    padding:2px 9px;border-radius:8px}
+  .hint{font-size:11.5px;color:var(--dim);margin-top:6px;line-height:1.45}
+  .hint code{color:var(--acc);font-size:10.5px;background:rgba(56,189,248,.09);
+    padding:1px 5px;border-radius:5px}
+
+  select{
+    width:100%;appearance:none;padding:12px 38px 12px 14px;
+    background:var(--card2) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%238fa3b8' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>") no-repeat right 14px center;
+    border:1px solid var(--line);border-radius:12px;color:var(--txt);
+    font-size:14px;font-family:inherit;font-weight:600;
+    transition:border-color .2s;
+  }
+  select:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+
+  input[type=range]{
+    -webkit-appearance:none;width:100%;height:28px;background:transparent;margin:0;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:7px;border-radius:99px;
+    background:linear-gradient(90deg,var(--acc) 0%,var(--acc2) var(--p,50%),#233140 var(--p,50%),#233140 100%);
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:21px;height:21px;border-radius:50%;
+    background:#fff;border:3.5px solid var(--acc);margin-top:-7px;
+    box-shadow:0 0 0 4px rgba(56,189,248,.18),0 3px 10px rgba(0,0,0,.7);
+  }
+
+  .switch{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:10px 12px;border:1px solid var(--line);border-radius:13px;
+    background:rgba(26,35,48,.5)}
+  .sw{position:relative;width:52px;height:30px;flex:0 0 52px}
+  .sw input{opacity:0;width:100%;height:100%;margin:0;position:absolute;z-index:2}
+  .sw span{
+    position:absolute;inset:0;border-radius:99px;background:#243244;transition:.25s;
+    border:1px solid var(--line);
+  }
+  .sw span::after{
+    content:"";position:absolute;width:22px;height:22px;border-radius:50%;
+    background:#8fa3b8;top:3px;left:4px;transition:.25s;
+    box-shadow:0 2px 6px rgba(0,0,0,.5);
+  }
+  .sw input:checked+span{background:linear-gradient(90deg,rgba(56,189,248,.5),rgba(129,140,248,.5));
+    border-color:var(--acc)}
+  .sw input:checked+span::after{transform:translateX(21px);background:#fff;
+    box-shadow:0 0 10px rgba(56,189,248,.8)}
+
+  .presets{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .btn{
+    border:1px solid var(--line);background:var(--card2);color:var(--txt);
+    padding:13px 8px;border-radius:14px;font-size:13px;font-weight:700;font-family:inherit;
+    cursor:pointer;transition:.16s;text-align:center;
+  }
+  .btn:active{transform:scale(.96)}
+  .btn.pri{
+    background:linear-gradient(135deg,var(--acc),var(--acc2));color:#04141c;border:none;
+    box-shadow:var(--glow);
+  }
+  .btn[data-profile]{position:relative;overflow:hidden}
+  .btn[data-profile]::before{content:"";position:absolute;inset:0;opacity:.14;transition:.2s}
+  .btn[data-profile="battery"]::before{background:linear-gradient(160deg,#34d399,#0ea5e9)}
+  .btn[data-profile="balanced"]::before{background:linear-gradient(160deg,#38bdf8,#818cf8)}
+  .btn[data-profile="perf"]::before{background:linear-gradient(160deg,#f87171,#fbbf24)}
+  .btn[data-profile="game"]::before{background:linear-gradient(160deg,#a78bfa,#f472b6)}
+  .btn[data-profile]:active::before{opacity:.3}
+  .btn .big{display:block;font-size:22px;margin-bottom:3px}
+  .btn .small{display:block;font-size:10px;font-weight:550;opacity:.7;margin-top:2px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  /* ═══ layout aplikasi native ═══ */
+  main{padding:12px 14px 120px}
+  .page{display:none}
+  .page.on{display:block;animation:pageIn .32s cubic-bezier(.22,1,.36,1)}
+  @keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* header ringkas ala app bar */
+  header{padding:14px 16px 12px}
+
+  /* bottom navigation */
+  .nav{position:fixed;left:0;right:0;bottom:0;z-index:40;
+    display:flex;background:rgba(9,13,19,.92);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-top:1px solid var(--line);
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+  .nav button{flex:1;background:none;border:none;color:var(--dim);font-family:inherit;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:7px 2px;border-radius:14px;font-size:10px;font-weight:700;cursor:pointer;
+    transition:color .2s}
+  .nav button .ic{font-size:19px;line-height:1;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+  .nav button.on{color:var(--acc)}
+  .nav button.on .ic{transform:translateY(-2px) scale(1.12);
+    filter:drop-shadow(0 0 8px rgba(56,189,248,.7))}
+  .nav button:active .ic{transform:scale(.85)}
+
+  /* FAB terapkan */
+  .fab{position:fixed;right:16px;bottom:calc(74px + env(safe-area-inset-bottom));z-index:39;
+    border:none;border-radius:17px;padding:14px 20px;
+    background:linear-gradient(135deg,var(--acc),var(--acc2));color:#04141c;
+    font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;
+    box-shadow:0 10px 30px -6px rgba(56,189,248,.65),0 4px 14px rgba(0,0,0,.5);
+    display:flex;align-items:center;gap:8px;transition:transform .15s}
+  .fab:active{transform:scale(.93)}
+  .fab .ic{font-size:16px}
+
+  .kick{display:none}
+
+  .toast{
+    position:fixed;left:50%;bottom:100px;transform:translate(-50%,14px);
+    background:rgba(13,20,28,.96);border:1px solid var(--acc);color:var(--txt);
+    padding:12px 20px;border-radius:14px;font-size:13px;font-weight:650;
+    opacity:0;pointer-events:none;transition:.28s;z-index:50;
+    max-width:88vw;text-align:center;box-shadow:0 14px 44px -10px rgba(0,0,0,.95),var(--glow);
+  }
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+  .toast.err{border-color:var(--bad);box-shadow:0 14px 44px -10px rgba(0,0,0,.95),0 0 24px -6px rgba(248,113,113,.5)}
+
+  .mono{font-family:ui-monospace,"Roboto Mono",monospace;font-size:11px;color:#9fc3dd;
+    background:#05080c;border:1px solid var(--line);border-radius:12px;padding:12px;
+    white-space:pre-wrap;word-break:break-all;max-height:200px;overflow:auto}
+  .sectitle{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);
+    font-weight:700;margin:2px 0 10px}
+  .badge{font-size:9.5px;font-weight:800;letter-spacing:.5px;padding:3px 9px;border-radius:99px;
+    background:rgba(52,211,153,.14);color:var(--ok);border:1px solid rgba(52,211,153,.35)}
+  .badge.off{background:rgba(148,163,184,.12);color:var(--dim);border-color:rgba(148,163,184,.3)}
+  .badge.live{background:rgba(56,189,248,.14);color:var(--acc);
+    border-color:rgba(56,189,248,.35);animation:livePulse 2s ease-in-out infinite}
+  @keyframes livePulse{0%,100%{box-shadow:0 0 0 0 rgba(56,189,248,.35)}
+    50%{box-shadow:0 0 0 5px rgba(56,189,248,0)}}
+
+  /* daftar pemakan CPU */
+  .proc{display:flex;align-items:center;gap:10px;padding:9px 0;
+    border-bottom:1px solid rgba(120,160,200,.09);animation:procIn .5s backwards}
+  .proc:last-child{border-bottom:none;padding-bottom:0}
+  @keyframes procIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+  .proc .rank{width:20px;flex:0 0 20px;font-size:11px;font-weight:800;color:var(--dim);
+    font-variant-numeric:tabular-nums;text-align:center}
+  .proc:first-child .rank{color:var(--acc)}
+  .proc .meta{min-width:0;flex:1}
+  .proc .nm{font-size:12.5px;font-weight:650;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis}
+  .proc .pid{font-size:10px;color:var(--dim);margin-top:1px;font-variant-numeric:tabular-nums}
+  .proc .pct{font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;
+    flex:0 0 auto;min-width:46px;text-align:right}
+  .proc .pct.ok{color:var(--ok)} .proc .pct.warn{color:var(--warn)}
+  .proc .pct.bad{color:var(--bad)}
+  .proc .track{height:3px;border-radius:99px;background:#22303f;margin-top:5px;overflow:hidden}
+  .proc .track i{display:block;height:100%;border-radius:99px;
+    background:linear-gradient(90deg,var(--ok),var(--warn),var(--bad));
+    transition:width .7s cubic-bezier(.22,1,.36,1)}
+
+  /* ══════════ LAPISAN ANIMASI ══════════ */
+
+  /* aurora bergerak di latar */
+  .aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+  .aurora i{position:absolute;display:block;border-radius:50%;filter:blur(70px);opacity:.42;
+    will-change:transform}
+  .aurora i:nth-child(1){width:60vw;height:60vw;left:-18vw;top:-16vw;
+    background:radial-gradient(circle,#0ea5e9,transparent 70%);animation:drift1 22s ease-in-out infinite}
+  .aurora i:nth-child(2){width:55vw;height:55vw;right:-20vw;top:12vh;
+    background:radial-gradient(circle,#818cf8,transparent 70%);animation:drift2 28s ease-in-out infinite}
+  .aurora i:nth-child(3){width:65vw;height:65vw;left:10vw;bottom:-25vw;
+    background:radial-gradient(circle,#22d3ee,transparent 70%);animation:drift3 34s ease-in-out infinite}
+  .aurora i:nth-child(4){width:38vw;height:38vw;right:5vw;bottom:8vh;
+    background:radial-gradient(circle,#a78bfa,transparent 70%);animation:drift1 26s ease-in-out infinite reverse}
+  @keyframes drift1{0%,100%{transform:translate3d(0,0,0) scale(1)}
+    33%{transform:translate3d(9vw,6vh,0) scale(1.15)}
+    66%{transform:translate3d(-5vw,11vh,0) scale(.92)}}
+  @keyframes drift2{0%,100%{transform:translate3d(0,0,0) scale(1)}
+    40%{transform:translate3d(-11vw,9vh,0) scale(1.18)}
+    70%{transform:translate3d(4vw,-6vh,0) scale(.9)}}
+  @keyframes drift3{0%,100%{transform:translate3d(0,0,0) scale(1)}
+    30%{transform:translate3d(8vw,-8vh,0) scale(1.1)}
+    65%{transform:translate3d(-9vw,-3vh,0) scale(1.2)}}
+
+  /* kartu masuk berurutan */
+  .card{opacity:0;transform:translateY(18px) scale(.985);
+    animation:cardIn .55s cubic-bezier(.22,1,.36,1) forwards}
+  .card:nth-of-type(1){animation-delay:.04s}
+  .card:nth-of-type(2){animation-delay:.10s}
+  .card:nth-of-type(3){animation-delay:.16s}
+  .card:nth-of-type(4){animation-delay:.22s}
+  .card:nth-of-type(5){animation-delay:.28s}
+  .card:nth-of-type(6){animation-delay:.34s}
+  .card:nth-of-type(7){animation-delay:.40s}
+  .card:nth-of-type(8){animation-delay:.46s}
+  .card:nth-of-type(9){animation-delay:.52s}
+  @keyframes cardIn{to{opacity:1;transform:none}}
+
+  /* isi kartu muncul bergeser saat dibuka */
+  .card[open] .body{animation:bodyIn .38s cubic-bezier(.22,1,.36,1)}
+  @keyframes bodyIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+  /* header masuk dari atas */
+  header{animation:headIn .6s cubic-bezier(.22,1,.36,1) both}
+  @keyframes headIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+  .stat{animation:statIn .5s cubic-bezier(.22,1,.36,1) both}
+  .stat:nth-child(1){animation-delay:.16s}
+  .stat:nth-child(2){animation-delay:.21s}
+  .stat:nth-child(3){animation-delay:.26s}
+  .stat:nth-child(4){animation-delay:.31s}
+  .stat:nth-child(5){animation-delay:.36s}
+  .stat:nth-child(6){animation-delay:.41s}
+  @keyframes statIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* logo berdenyut pelan */
+  .logo{animation:logoPulse 4s ease-in-out infinite}
+  @keyframes logoPulse{0%,100%{box-shadow:0 0 22px -6px rgba(56,189,248,.55)}
+    50%{box-shadow:0 0 34px -2px rgba(129,140,248,.85)}}
+
+  /* tombol ripple */
+  .btn{position:relative;overflow:hidden}
+  .ripple{position:absolute;border-radius:50%;transform:scale(0);pointer-events:none;
+    background:radial-gradient(circle,rgba(255,255,255,.55),rgba(255,255,255,0) 70%);
+    animation:rip .62s ease-out forwards}
+  @keyframes rip{to{transform:scale(2.8);opacity:0}}
+
+  /* shimmer saat memuat */
+  .loading .mono, .loading .subtxt{background-size:200% 100%}
+  .shimmer{position:relative;overflow:hidden}
+  .shimmer::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(100deg,transparent 20%,rgba(150,200,255,.16) 50%,transparent 80%);
+    background-size:220% 100%;animation:shim 1.5s linear infinite}
+  @keyframes shim{0%{background-position:180% 0}100%{background-position:-80% 0}}
+
+  /* kilau saat nilai berubah */
+  .flash{animation:flash .75s ease-out}
+  @keyframes flash{0%{background:rgba(56,189,248,.45);border-color:var(--acc);
+      box-shadow:0 0 0 3px rgba(56,189,248,.28)}
+    100%{background:rgba(34,211,238,.10);border-color:rgba(34,211,238,.22);box-shadow:none}}
+
+  /* chip statistik berdenyut saat nilainya berubah */
+  .stat.bump .v{animation:bump .5s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+
+  /* denyut halus untuk badge ON */
+  .badge:not(.off){animation:badgeGlow 2.6s ease-in-out infinite}
+  @keyframes badgeGlow{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.25)}
+    50%{box-shadow:0 0 0 5px rgba(52,211,153,0)}}
+
+  /* tombol utama bergerak mengilap */
+  .btn.pri{background-size:200% 100%;animation:priFlow 5s linear infinite}
+  @keyframes priFlow{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+
+  /* toast masuk dengan pegas */
+  .toast.on{animation:toastIn .42s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes toastIn{from{transform:translate(-50%,20px) scale(.9);opacity:0}
+    to{transform:translate(-50%,0) scale(1);opacity:1}}
+
+  /* animasi terkait halaman dihormati reduce-motion */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;
+      transition-duration:.01ms !important}
+  }
+  </style>
+</head>
+<body>
+
+<div class="aurora"><i></i><i></i><i></i><i></i></div>
+
+<header>
+  <div class="hrow">
+    <div class="logo">A</div>
+    <div style="min-width:0">
+      <h1>AjralDEV <span>Kernel Tuner</span></h1>
+      <div class="sub" id="sub"><span class="dot"></span><span id="subtxt">memuat...</span></div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat" id="st-tb"><div class="k">Baterai</div><div class="v" id="s-tb">–</div></div>
+    <div class="stat" id="st-t7"><div class="k">CPU prime</div><div class="v" id="s-t7">–</div></div>
+    <div class="stat" id="st-t4"><div class="k">CPU big</div><div class="v" id="s-t4">–</div></div>
+    <div class="stat" id="st-tg"><div class="k">GPU</div><div class="v" id="s-tg">–</div></div>
+    <div class="stat"><div class="k">RAM bebas</div><div class="v" id="s-ram">–</div></div>
+    <div class="stat"><div class="k">Load</div><div class="v" id="s-load">–</div>
+      <div class="loadbar"><i id="loadbar"></i></div></div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ═══ HALAMAN 1: BERANDA ═══ -->
+  <div class="page on" id="page-home">
+
+  <details class="card" open>
+    <summary><span class="ico">⚡</span>Profil cepat<span class="chev">▶</span></summary>
+    <div class="body">
+      <div class="presets" style="grid-template-columns:repeat(2,1fr)">
+        <button class="btn" data-profile="battery"><span class="big">🔋</span>Hemat<span class="small">dingin, awet</span></button>
+        <button class="btn" data-profile="balanced"><span class="big">⚖️</span>Seimbang<span class="small">default</span></button>
+        <button class="btn" data-profile="game"><span class="big">🎮</span>Game<span class="small">FPS tinggi, terkontrol</span></button>
+        <button class="btn" data-profile="perf"><span class="big">🚀</span>Performa<span class="small">maks, panas</span></button>
+      </div>
+      <div class="hint">Profil menulis sekumpulan nilai sekaligus (CPU, GPU, memori, I/O). Semua tersimpan dan diterapkan ulang tiap boot.</div>
+    </div>
+  </details>
+
+  <details class="card" open id="card-topapps">
+    <summary><span class="ico">📊</span>Pemakan CPU teratas
+      <span class="badge live" id="top-badge">LIVE</span>
+      <span class="chev">▶</span></summary>
+    <div class="body">
+      <div class="sectitle">Proses dengan pemakaian CPU tertinggi (per 30 detik)</div>
+      <div id="topapps"></div>
+    </div>
+  </details>
+
+  </div>
+
+  <!-- ═══ HALAMAN 2: TUNING ═══ -->
+  <div class="page" id="page-tune">
+
+  <details class="card" open id="card-bore">
+    <summary><span class="ico">🧠</span>BORE Scheduler
+      <span class="badge" id="bore-badge">–</span>
+      <span class="chev">▶</span></summary>
+    <div class="body">
+      <div class="sectitle">Burst-Oriented Response Enhancer</div>
+      <div class="field">
+        <div class="switch">
+          <div><div class="n" style="font-size:13px;font-weight:600">Aktifkan BORE</div>
+            <div class="hint" style="margin-top:2px">Penjadwal interaktif untuk respons lebih cepat</div></div>
+          <label class="sw"><input type="checkbox" id="bore_on"><span></span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="lab"><span class="n">Penalty scale</span><span class="v" id="v-scale">–</span></div>
+        <input type="range" id="r-scale" min="256" max="2048" step="64">
+        <div class="hint">Lebih kecil = lebih responsif (penalti cepat turun), lebih besar = lebih hemat daya.</div>
+      </div>
+
+      <div class="field">
+        <div class="lab"><span class="n">Penalty offset</span><span class="v" id="v-off">–</span></div>
+        <input type="range" id="r-off" min="0" max="64" step="1">
+        <div class="hint">Offset dasar penalti burst.</div>
+      </div>
+
+      <div class="field">
+        <div class="lab"><span class="n">Smoothness (long)</span><span class="v" id="v-sl">–</span></div>
+        <input type="range" id="r-sl" min="0" max="3" step="1">
+      </div>
+
+      <div class="field">
+        <div class="lab"><span class="n">Smoothness (short)</span><span class="v" id="v-ss">–</span></div>
+        <input type="range" id="r-ss" min="0" max="3" step="1">
+      </div>
+
+      <div class="field">
+        <div class="lab"><span class="n">Cache lifetime</span><span class="v" id="v-cl">–</span></div>
+        <input type="range" id="r-cl" min="1000000" max="100000000" step="1000000">
+        <div class="hint">Usia cache burst (nanodetik). 60.000.000 = 60 ms.</div>
+      </div>
+
+      <div class="field">
+        <div class="lab"><span class="n">Fork atavistic</span><span class="v" id="v-fa">–</span></div>
+        <input type="range" id="r-fa" min="0" max="4" step="1">
+        <div class="hint">Pewarisan nilai burst ke proses anak.</div>
+      </div>
+    </div>
+  </details>
+
+  <details class="card">
+    <summary><span class="ico">🔥</span>CPU<span class="chev">▶</span></summary>
+    <div class="body">
+      <div class="field">
+        <div class="lab"><span class="n">Batas frekuensi maksimum (global)</span><span class="v" id="v-cmax">–</span></div>
+        <input type="range" id="r-cmax" min="0" max="20" step="1">
+        <div class="hint">Samsung memakai satu limit global untuk semua core (node <code>/sys/power/cpufreq_max_limit</code>). Posisi paling kiri = tanpa batas (penuh).</div>
+      </div>
+      <div class="field">
+        <div class="lab"><span class="n">Governor cluster kecil (0–3)</span><span class="v" id="v-c0">–</span></div>
+        <select id="g0"></select>
+      </div>
+      <div class="field">
+        <div class="lab"><span class="n">Governor cluster besar (4–6)</span><span class="v" id="v-c4">–</span></div>
+        <select id="g4"></select>
+      </div>
+      <div class="field">
+        <div class="lab"><span class="n">Governor prime (7)</span><span class="v" id="v-c7">–</span></div>
+        <select id="g7"></select>
+        <div class="hint">Frekuensi minimum diatur otomatis oleh power HAL Samsung, bukan oleh kernel — karena itu tidak disediakan di sini.</div>
+      </div>
+      <div class="field">
+        <div class="lab"><span class="n">sched_boost</span><span class="v" id="v-sb">–</span></div>
+        <input type="range" id="r-sb" min="0" max="2" step="1">
+        <div class="hint">0 = mati, 2 = boost ke core besar.</div>
+      </div>
+      <div class="field">
+        <div class="lab"><span class="n">schedtune top-app</span><span class="v" id="v-st">–</span></div>
+        <input type="range" id="r-st" min="0" max="20" step="1">
+        <div class="hint">Boost untuk aplikasi di depan.</div>
+      </div>
+    </div>
+  </details>
+
+  <details class="card">
+    <summary><span class="ico">🎮</span>GPU<span class="chev">▶</span></summary>
+    <div class="body">
+      <div class="field">
+        <div class="lab"><span class="n">Governor</span><span class="v" id="v-gp">–</span></div>
+        <select id="gg"></select>
+      </div>
+      <div class="field">
+        <div class="lab"><span class="n">Power level maks</span><span class="v" id="v-gmax">–</span></div>
+        <input type="range" id="r-gmax" min="0" max="6" step="1">
+        <div class="hint">0 = performa tertinggi, 6 = paling hemat.</div>
+      </div>
+    </div>
+  </details>
+
+  <details class="card">
+    <summary><span class="ico">💾</span>Memori<span class="chev">▶</span></summary>
+    <div class="body">
+      <div class="field">
+        <div class="lab"><span class="n">Swappiness</span><span class="v" id="v-sw">–</span></div>
+        <input type="range" id="r-sw" min="0" max="200" step="5">
+      </div>
+      <div class="field">
+        <div class="lab"><span class="n">VFS cache pressure</span><span class="v" id="v-vfs">–</span></div>
+        <input type="range" id="r-vfs" min="10" max="200" step="5">
+      </div>
+      <div class="field">
+        <div class="lab"><span class="n">min_free_kbytes</span><span class="v" id="v-mfk">–</span></div>
+        <input type="range" id="r-mfk" min="4096" max="65536" step="1024">
+      </div>
+      <div class="field">
+        <div class="switch">
+          <div><div class="n" style="font-size:13px;font-weight:600">KSM (page merging)</div>
+            <div class="hint" style="margin-top:2px">Hemat RAM, sedikit tambah beban CPU</div></div>
+          <label class="sw"><input type="checkbox" id="ksm"><span></span></label>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="card">
+    <summary><span class="ico">💿</span>I/O<span class="chev">▶</span></summary>
+    <div class="body">
+      <div class="field">
+        <div class="lab"><span class="n">Scheduler UFS (sda)</span><span class="v" id="v-ssda">–</span></div>
+        <select id="s-sda"></select>
+      </div>
+      <div class="field">
+        <div class="lab"><span class="n">Scheduler kartu SD (mmcblk0)</span><span class="v" id="v-smmc">–</span></div>
+        <select id="s-mmc"></select>
+      </div>
+      <div class="field">
+        <div class="lab"><span class="n">Read-ahead kartu SD</span><span class="v" id="v-rmmc">–</span></div>
+        <input type="range" id="r-rmmc" min="64" max="2048" step="64">
+        <div class="hint">Read-ahead UFS dikendalikan power HAL Samsung, karena itu tidak disediakan di sini.</div>
+      </div>
+    </div>
+  </details>
+
+  <details class="card">
+    <summary><span class="ico">🌐</span>Jaringan<span class="chev">▶</span></summary>
+    <div class="body">
+      <div class="field">
+        <div class="lab"><span class="n">TCP congestion control</span><span class="v" id="v-cc">–</span></div>
+        <select id="s-cc"></select>
+        <div class="hint">BBR adalah bawaan kernel ini; cubic/reno sebagai pembanding.</div>
+      </div>
+    </div>
+  </details>
+
+  </div>
+
+  <!-- ═══ HALAMAN 3: MONITOR ═══ -->
+  <div class="page" id="page-monitor">
+
+  <details class="card" open id="card-diag">
+    <summary><span class="ico">🩺</span>Diagnostik<span class="chev">▶</span></summary>
+    <div class="body">
+      <div class="hint" style="margin-bottom:10px">Kalau semua pilihan kosong, kirim isi kotak di bawah ini.</div>
+      <div class="mono" id="diag">memeriksa...</div>
+      <div style="height:10px"></div>
+      <button class="btn" id="btn-diag" style="width:100%">Jalankan diagnostik</button>
+    </div>
+  </details>
+
+  <details class="card">
+    <summary><span class="ico">🗂️</span>Status mentah<span class="chev">▶</span></summary>
+    <div class="body">
+      <div class="mono" id="raw">–</div>
+      <div style="height:10px"></div>
+      <button class="btn" id="btn-raw" style="width:100%">Muat ulang status</button>
+    </div>
+  </details>
+
+  </div>
+
+</main>
+
+<button class="fab" id="btn-save"><span class="ic">✓</span>Terapkan</button>
+
+<nav class="nav">
+  <button class="on" data-tab="home"><span class="ic">🏠</span>Beranda</button>
+  <button data-tab="tune"><span class="ic">🎛️</span>Tuning</button>
+  <button data-tab="monitor"><span class="ic">📈</span>Monitor</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+let MI = null;
+let CFG = {};
+let LISTS = {};
+let _cbSeq = 0;
+let EXEC_MODE = null;   // "sync" | "cb2" | "cb3"
+
+/* ---------- util ---------- */
+
+/* ripple pada semua tombol */
+document.addEventListener("pointerdown", e => {
+  const b = e.target.closest(".btn");
+  if (!b) return;
+  const r = b.getBoundingClientRect();
+  const size = Math.max(r.width, r.height);
+  const span = document.createElement("span");
+  span.className = "ripple";
+  span.style.width = span.style.height = size + "px";
+  span.style.left = (e.clientX - r.left - size / 2) + "px";
+  span.style.top = (e.clientY - r.top - size / 2) + "px";
+  b.appendChild(span);
+  setTimeout(() => span.remove(), 650);
+}, { passive: true });
+
+/* kilau saat nilai kontrol berubah */
+function flashEl(el) {
+  if (!el) return;
+  el.classList.remove("flash");
+  void el.offsetWidth;
+  el.classList.add("flash");
+}
+
+/* chip statistik "bump" saat nilainya berubah */
+function setStat(elId, text) {
+  const el = $(elId);
+  if (!el) return;
+  if (el.textContent === text) return;
+  el.textContent = text;
+  const chip = el.closest(".stat");
+  if (chip) {
+    chip.classList.remove("bump");
+    void chip.offsetWidth;
+    chip.classList.add("bump");
+  }
+}
+
+function toast(msg, isErr) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast on" + (isErr ? " err" : "");
+  clearTimeout(t._h);
+  t._h = setTimeout(() => { t.className = "toast"; }, 3000);
+}
+
+function parseKV(text) {
+  const o = {};
+  String(text || "").split("\n").forEach(line => {
+    const i = line.indexOf("=");
+    if (i > 0) o[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+  });
+  return o;
+}
+
+function mhz(v) {
+  const n = parseInt(v, 10);
+  if (!n || isNaN(n)) return "–";
+  return (n / 1000).toFixed(0) + " MHz";
+}
+
+function tempC(v) {
+  const n = parseInt(v, 10);
+  if (isNaN(n) || n === 0) return "–";
+  /* Samsung battery/temp = 0.1 °C (433 = 43.3°); thermal zone = milli °C.
+     Bedakan lewat besaran nilai. */
+  const c = Math.abs(n) > 1000 ? n / 1000 : n / 10;
+  return c.toFixed(1) + "°";
+}
+
+/* kelas warna chip suhu berdasarkan nilai suhu asli (bukan string tampilan) */
+function tempClass(v) {
+  const n = parseInt(v, 10);
+  if (isNaN(n) || n === 0) return "";
+  const c = Math.abs(n) > 1000 ? n / 1000 : n / 10;
+  if (c >= 55) return "bad";
+  if (c >= 45) return "warn";
+  return "ok";
+}
+
+function paintTemps(o) {
+  const pairs = [
+    ["st-tb", o.temp_batt, "s-tb"],
+    ["st-t7", o.temp_cpu7, "s-t7"],
+    ["st-t4", o.temp_cpu4, "s-t4"],
+    ["st-tg", o.temp_gpu, "s-tg"]
+  ];
+  pairs.forEach(([st, val, sv]) => {
+    const el = $(st);
+    if (el) el.className = "stat " + tempClass(val);
+    setStat(sv, tempC(val));
+  });
+}
+
+function paintLoad(load1) {
+  const n = parseFloat(load1);
+  if (isNaN(n)) return;
+  const pct = Math.min(100, Math.round(n / 8 * 100));
+  $("loadbar").style.width = pct + "%";
+  setStat("s-load", n.toFixed(2));
+}
+
+function kb2gb(k) {
+  const n = parseInt(k, 10);
+  if (!n || isNaN(n)) return "–";
+  return (n / 1048576).toFixed(1) + " GB";
+}
+
+/* ---------- jembatan ksu ---------- */
+
+function ksuHas(fn) {
+  return !!(window.ksu && typeof window.ksu[fn] === "function");
+}
+
+/* Bridge exec — pola sama dengan modul Frosty:
+   ksu.exec(cmd, JSON string opts, namaCallback)
+   callback global: (errno, stdout, stderr)                         */
+
+const EXEC_TIMEOUT = 60000;
+
+function execFull(cmd, opts) {
+  return new Promise(resolve => {
+    const name = "_ajralCb" + (++_cbSeq);
+    let done = false;
+    const finish = r => {
+      if (done) return;
+      done = true;
+      try { delete window[name]; } catch (e) {}
+      resolve(r);
+    };
+    window[name] = function (errno, stdout, stderr) {
+      finish({
+        errno: (typeof errno === "number") ? errno : 0,
+        stdout: String(stdout == null ? "" : stdout),
+        stderr: String(stderr == null ? "" : stderr)
+      });
+    };
+    try {
+      window.ksu.exec(cmd, JSON.stringify(opts || {}), name);
+    } catch (e) {
+      finish({ errno: -1, stdout: "", stderr: "EXC " + e });
+      return;
+    }
+    setTimeout(() => finish({ errno: -1, stdout: "", stderr: "timeout" }), EXEC_TIMEOUT);
+  });
+}
+
+async function sh(cmd) {
+  if (!ksuHas("exec")) {
+    window._ksuErr = "ksu.exec tidak tersedia";
+    return "";
+  }
+  const r = await execFull(cmd, {});
+  let out = r.stdout;
+  if (r.stderr && r.errno !== 0) out += (out ? "\n" : "") + r.stderr;
+  if (EXEC_MODE === null && (r.stdout || r.stderr)) EXEC_MODE = "cb3";
+  return out;
+}
+
+/* tulis log ke file supaya bisa dibaca lewat adb */
+const LOGPATH = "/data/adb/ajral_tuner/webui.log";
+
+async function wlog(text) {
+  try {
+    const safe = String(text).replace(/'/g, "'\\''");
+    await sh("printf '[%s] %s\\n' \"$(date +%H:%M:%S)\" '" + safe + "' >> '" + LOGPATH + "'");
+  } catch (e) {}
+}
+
+function binPath() {
+  const d = (MI && MI.moduleDir) ? MI.moduleDir : "/data/adb/modules/ajral_tuner";
+  return d + "/bin/ajral";
+}
+
+async function ajral(args) {
+  return await sh("sh " + binPath() + " " + args);
+}
+
+/* ---------- muat info ---------- */
+
+async function loadInfo() {
+  if (!MI) {
+    try { MI = JSON.parse(ksuHas("moduleInfo") ? window.ksu.moduleInfo() : "{}"); }
+    catch (e) { MI = null; }
+  }
+
+  const out = parseKV(await ajral("info"));
+  if (!out.kernel) return false;
+  CFG = out;
+
+  const ver = (MI && MI.version) ? MI.version : "v1.0.0";
+  $("subtxt").textContent = out.kernel + " · up " + upStr(out.uptime) + " · " + ver;
+
+  paintTemps(out);
+  setStat("s-ram", kb2gb(out.mem_avail_kb));
+  paintLoad(out.load1);
+
+  $("raw").textContent = Object.keys(out).sort()
+    .map(k => k.padEnd(22, " ") + " = " + out[k]).join("\n");
+
+  return true;
+}
+
+function upStr(sec) {
+  const up = parseInt(sec, 10) || 0;
+  const h = Math.floor(up / 3600), m = Math.floor((up % 3600) / 60);
+  return h + "j " + m + "m";
+}
+
+/* ---------- isi kontrol ---------- */
+
+function fillSelect(el, list, cur, unitFn) {
+  const items = String(list || "").trim().split(/\s+/).filter(Boolean);
+  el.innerHTML = "";
+  if (!items.length) {
+    const o = document.createElement("option");
+    o.textContent = "(" + (cur || "?") + ")";
+    el.appendChild(o);
+    return;
+  }
+  items.forEach(v => {
+    const o = document.createElement("option");
+    o.value = v;
+    o.textContent = unitFn ? unitFn(v) : v;
+    if (String(v) === String(cur)) o.selected = true;
+    el.appendChild(o);
+  });
+}
+
+function setRange(el, val, lo, hi) {
+  const v = parseInt(val, 10);
+  if (!isNaN(v)) {
+    el.min = lo; el.max = hi;
+    el.value = v;
+    paintRange(el);
+  }
+}
+
+function paintRange(el) {
+  const mn = +el.min, mx = +el.max, v = +el.value;
+  const p = mx > mn ? ((v - mn) / (mx - mn)) * 100 : 0;
+  el.style.setProperty("--p", p + "%");
+}
+
+function syncUI() {
+  const c = CFG;
+
+  // BORE
+  $("bore_on").checked = String(c.bore_enable) === "1";
+  const bb = $("bore-badge");
+  if (bb) {
+    const on = String(c.bore_enable) === "1";
+    bb.textContent = on ? "ON" : "OFF";
+    bb.className = "badge" + (on ? "" : " off");
+  }
+  setRange($("r-scale"), c.burst_penalty_scale, 256, 2048);
+  setRange($("r-off"), c.burst_penalty_offset, 0, 64);
+  setRange($("r-sl"), c.burst_smoothness_long, 0, 3);
+  setRange($("r-ss"), c.burst_smoothness_short, 0, 3);
+  setRange($("r-cl"), c.burst_cache_lifetime, 1000000, 100000000);
+  setRange($("r-fa"), c.burst_fork_atavistic, 0, 4);
+  labelBore();
+
+  // CPU
+  fillSelect($("g0"), c.gov0_list, c.gov0);
+  fillSelect($("g4"), c.gov4_list, c.gov4);
+  fillSelect($("g7"), c.gov7_list, c.gov7);
+
+  const f0 = String(c.freq0_list || "").trim().split(/\s+/).filter(Boolean).map(Number);
+  const f4 = String(c.freq4_list || "").trim().split(/\s+/).filter(Boolean).map(Number);
+  const f7 = String(c.freq7_list || "").trim().split(/\s+/).filter(Boolean).map(Number);
+  LISTS.f0 = f0; LISTS.f4 = f4; LISTS.f7 = f7;
+  const fall = Array.from(new Set([].concat(f0, f4, f7))).sort((a, b) => a - b);
+  LISTS.fall = fall;
+
+  const limNow = parseInt(c.max0, 10) || 0;
+  setRange($("r-cmax"), limNow <= 0 ? 0 : idxOf(fall, limNow) + 1, 0, fall.length);
+  labelCpu();
+
+  setRange($("r-sb"), c.sched_boost, 0, 2);
+  setRange($("r-st"), c.stune_top, 0, 20);
+  labelCpu2();
+
+  // GPU
+  fillSelect($("gg"), c.gpu_govs, c.gpu_gov);
+  const nump = parseInt(c.gpu_num_pwr, 10) || 7;
+  setRange($("r-gmax"), c.gpu_max_pwr, 0, nump - 1);
+  labelGpu();
+
+  // Memori
+  setRange($("r-sw"), c.swappiness, 0, 200);
+  setRange($("r-vfs"), c.vfs_cache_pressure, 10, 200);
+  setRange($("r-mfk"), c.min_free_kbytes, 4096, 65536);
+  $("ksm").checked = String(c.ksm_run) === "1";
+  labelMem();
+
+  // I/O
+  fillSelect($("s-sda"), cleanSched(c.sched_sda), currentSched(c.sched_sda));
+  fillSelect($("s-mmc"), cleanSched(c.sched_mmc), currentSched(c.sched_mmc));
+  setRange($("r-rmmc"), c.readahead_mmc, 64, 2048);
+  labelIO();
+
+  // Jaringan
+  fillSelect($("s-cc"), c.tcp_avail, c.tcp_cc);
+  $("v-cc").textContent = c.tcp_cc || "–";
+}
+
+function currentSched(s) {
+  const m = String(s || "").match(/\[([^\]]+)\]/);
+  return m ? m[1] : "";
+}
+
+function cleanSched(s) {
+  return String(s || "").replace(/[\[\]]/g, " ").trim();
+}
+
+function idxOf(arr, val) {
+  const n = parseInt(val, 10);
+  const i = arr.indexOf(n);
+  return i < 0 ? 0 : i;
+}
+
+function labelBore() {
+  $("v-scale").textContent = $("r-scale").value;
+  $("v-off").textContent = $("r-off").value;
+  $("v-sl").textContent = $("r-sl").value;
+  $("v-ss").textContent = $("r-ss").value;
+  $("v-cl").textContent = (parseInt($("r-cl").value, 10) / 1e6).toFixed(0) + " ms";
+  $("v-fa").textContent = $("r-fa").value;
+}
+
+function labelCpu() {
+  const fall = LISTS.fall || [];
+  const iv = +$("r-cmax").value;
+  $("v-cmax").textContent = iv <= 0 ? "tanpa batas" : mhz(fall[iv - 1]);
+  $("v-c0").textContent = $("g0").value || "–";
+  $("v-c4").textContent = $("g4").value || "–";
+  $("v-c7").textContent = $("g7").value || "–";
+}
+
+function labelCpu2() {
+  $("v-sb").textContent = $("r-sb").value;
+  $("v-st").textContent = $("r-st").value;
+}
+
+function labelGpu() {
+  $("v-gp").textContent = $("gg").value || "–";
+  $("v-gmax").textContent = "L" + $("r-gmax").value;
+}
+
+function labelMem() {
+  $("v-sw").textContent = $("r-sw").value;
+  $("v-vfs").textContent = $("r-vfs").value;
+  $("v-mfk").textContent = parseInt($("r-mfk").value, 10).toLocaleString("id-ID") + " kB";
+}
+
+function labelIO() {
+  $("v-ssda").textContent = $("s-sda").value || "–";
+  $("v-smmc").textContent = $("s-mmc").value || "–";
+  $("v-rmmc").textContent = $("r-rmmc").value + " kB";
+}
+
+/* ---------- aksi ---------- */
+
+async function save() {
+  const writes = [];
+
+  const boreOn = $("bore_on").checked ? 1 : 0;
+  if (String(boreOn) !== String(CFG.bore_enable)) writes.push(["bore_enable", boreOn]);
+
+  const map = [
+    ["burst_penalty_scale", "r-scale"], ["burst_penalty_offset", "r-off"],
+    ["burst_smoothness_long", "r-sl"], ["burst_smoothness_short", "r-ss"],
+    ["burst_cache_lifetime", "r-cl"], ["burst_fork_atavistic", "r-fa"],
+    ["sched_boost", "r-sb"], ["stune_top", "r-st"],
+    ["swappiness", "r-sw"], ["vfs_cache_pressure", "r-vfs"],
+    ["min_free_kbytes", "r-mfk"],
+    ["readahead_mmc", "r-rmmc"]
+  ];
+  map.forEach(([key, el]) => {
+    const v = $(el).value;
+    if (String(v) !== String(CFG[key])) writes.push([key, v]);
+  });
+
+  const fall = LISTS.fall || [];
+  const iv = +$("r-cmax").value;
+  const cmax = iv <= 0 ? 0 : fall[iv - 1];
+  if (String(cmax) !== String(CFG.max0)) writes.push(["cpu_max_all", cmax]);
+
+  if ($("g0").value !== CFG.gov0) writes.push(["gov0", $("g0").value]);
+  if ($("g4").value !== CFG.gov4) writes.push(["gov4", $("g4").value]);
+  if ($("g7").value !== CFG.gov7) writes.push(["gov7", $("g7").value]);
+
+  if ($("gg").value !== CFG.gpu_gov) writes.push(["gpu_gov", $("gg").value]);
+  if ($("r-gmax").value !== CFG.gpu_max_pwr) writes.push(["gpu_max_pwr", $("r-gmax").value]);
+
+  if ($("s-sda").value !== currentSched(CFG.sched_sda)) writes.push(["sched_sda", $("s-sda").value]);
+  if ($("s-mmc").value !== currentSched(CFG.sched_mmc)) writes.push(["sched_mmc", $("s-mmc").value]);
+  if ($("s-cc").value !== CFG.tcp_cc) writes.push(["tcp_cc", $("s-cc").value]);
+
+  const ksmOn = $("ksm").checked ? 1 : 0;
+  if (String(ksmOn) !== String(CFG.ksm_run)) writes.push(["ksm_run", ksmOn]);
+
+  if (!writes.length) { toast("Tidak ada perubahan"); return; }
+
+  toast("Menerapkan " + writes.length + " setelan...");
+  let ok = 0;
+  for (const [k, v] of writes) {
+    const r = String(await ajral("set " + k + " " + v)).trim();
+    if (r.indexOf("ok") >= 0) ok++;
+  }
+  await loadInfo(); syncUI();
+  toast("Diterapkan: " + ok + "/" + writes.length + " setelan");
+}
+
+async function applyProfile(name) {
+  toast("Menerapkan profil " + name + "...");
+  const r = String(await ajral("profile " + name)).trim();
+  if (r.indexOf("ok") >= 0) {
+    await loadInfo(); syncUI();
+    toast("Profil " + name + " diterapkan");
+  } else {
+    toast("Gagal menerapkan profil " + name, true);
+  }
+}
+
+async function reload() {
+  if (await loadInfo()) { syncUI(); toast("Dimuat ulang"); }
+  else toast("Gagal membaca status kernel", true);
+}
+
+/* ---------- diagnosa ---------- */
+
+async function runDiag() {
+  const L = [];
+  L.push("URL             : " + location.href.slice(0, 90));
+  L.push("ksu object      : " + (window.ksu ? "ADA" : "TIDAK ADA"));
+  ["exec", "toast", "moduleInfo", "spawn", "fullScreen"].forEach(f => {
+    L.push(("ksu." + f).padEnd(16) + ": " + (ksuHas(f) ? "ADA" : "TIDAK ADA"));
+  });
+  L.push("mode kerja      : " + (EXEC_MODE || "(belum terdeteksi)"));
+  if (window._ksuErr) L.push("error           : " + window._ksuErr);
+
+  L.push("");
+  L.push("--- moduleInfo() ---");
+  try {
+    L.push(ksuHas("moduleInfo") ? String(window.ksu.moduleInfo()) : "(tidak ada API)");
+  } catch (e) { L.push("EXC: " + e); }
+
+  if (ksuHas("exec")) {
+    L.push("");
+    L.push("--- exec(cmd, opts, cb) — pola Frosty ---");
+    const r1 = await execFull("echo HALO3", {});
+    L.push(JSON.stringify(r1).slice(0, 200));
+
+    L.push("");
+    L.push("--- exec sinkron: echo ---");
+    try {
+      const r = execSync("echo HALO");
+      L.push(r === null ? "(bukan string)" : JSON.stringify(r).slice(0, 120));
+    } catch (e) { L.push("EXC: " + e); }
+
+    L.push("");
+    L.push("--- exec(cmd, cb) ---");
+    L.push(JSON.stringify(await execCb("echo HALO2", false)).slice(0, 120));
+
+    L.push("");
+    L.push("--- id ---");
+    L.push((await sh("id")) || "(kosong)");
+
+    L.push("");
+    L.push("--- engine info ---");
+    const b = binPath();
+    L.push("path: " + b);
+    L.push((await sh("ls -l " + b)) || "(kosong)");
+    const inf = await sh("sh " + b + " info 2>&1 | head -6");
+    L.push(inf || "(kosong)");
+    await wlog("DIAG:\n" + L.join("\n"));
+  }
+
+  $("diag").textContent = L.join("\n");
+}
+
+/* ---------- event ---------- */
+
+function bindRange(id, labelFn) {
+  const el = $(id);
+  el.addEventListener("input", () => { paintRange(el); if (labelFn) labelFn(); });
+}
+
+bindRange("r-scale", labelBore);
+bindRange("r-off", labelBore);
+bindRange("r-sl", labelBore);
+bindRange("r-ss", labelBore);
+bindRange("r-cl", labelBore);
+bindRange("r-fa", labelBore);
+bindRange("r-cmax", labelCpu);
+bindRange("r-sb", labelCpu2);
+bindRange("r-st", labelCpu2);
+bindRange("r-gmax", labelGpu);
+bindRange("r-sw", labelMem);
+bindRange("r-vfs", labelMem);
+bindRange("r-mfk", labelMem);
+bindRange("r-rmmc", labelIO);
+
+$("gg").addEventListener("change", labelGpu);
+$("g0").addEventListener("change", labelCpu);
+$("g4").addEventListener("change", labelCpu);
+$("g7").addEventListener("change", labelCpu);
+$("s-sda").addEventListener("change", labelIO);
+$("s-mmc").addEventListener("change", labelIO);
+$("s-cc").addEventListener("change", () => { $("v-cc").textContent = $("s-cc").value; });
+
+document.querySelectorAll("[data-profile]").forEach(b => {
+  b.addEventListener("click", () => applyProfile(b.getAttribute("data-profile")));
+});
+
+$("btn-save").addEventListener("click", save);
+$("btn-raw").addEventListener("click", async () => { await reload(); });
+$("btn-diag").addEventListener("click", runDiag);
+
+/* ---------- navigasi tab ala aplikasi ---------- */
+
+document.querySelectorAll(".nav button").forEach(b => {
+  b.addEventListener("click", () => {
+    const tab = b.getAttribute("data-tab");
+    document.querySelectorAll(".nav button").forEach(x => x.classList.toggle("on", x === b));
+    document.querySelectorAll(".page").forEach(p => p.classList.toggle("on", p.id === "page-" + tab));
+    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+    /* kartu topapps hanya hidup di Beranda; refresh saat dibuka */
+    if (tab === "home") refreshTopApps();
+  });
+});
+
+/* refresh suhu tiap 15 detik, dan HANYA saat halaman terlihat */
+setInterval(async () => {
+  if (document.hidden) return;
+  const out = parseKV(await ajral("info"));
+  if (!out.kernel) return;
+  paintTemps(out);
+  setStat("s-ram", kb2gb(out.mem_avail_kb));
+  paintLoad(out.load1);
+}, 15000);
+
+/* ---------- pemakan CPU teratas ---------- */
+
+function pctClass(p) {
+  if (p >= 30) return "bad";
+  if (p >= 12) return "warn";
+  return "ok";
+}
+
+async function refreshTopApps() {
+  /* lewati saat halaman tidak terlihat atau kartu tertutup — hemat CPU */
+  if (document.hidden) return;
+  const card = $("card-topapps");
+  if (card && !card.open) return;
+  if (card && card.offsetParent === null) return;   /* tab lain sedang aktif */
+
+  const out = await sh("top -b -n 1 -m 8 -s 6 2>/dev/null | tail -n 9");
+  const lines = String(out || "").split("\n").filter(l => /^\s*\d+\s/.test(l));
+  const rows = [];
+  for (const ln of lines) {
+    /* PID USER PR NI VIRT RES SHR S %CPU %MEM TIME+ ARGS  → %CPU = f[8], nama = f[11..] */
+    const f = ln.trim().split(/\s+/);
+    if (f.length < 12) continue;
+    const pid = f[0];
+    const cpu = parseFloat(f[8]);
+    const name = f.slice(11).join(" ");
+    if (isNaN(cpu) || !/^\d+$/.test(pid)) continue;
+    /* sembunyikan proses tuner sendiri supaya tidak menyesatkan */
+    if (name.indexOf("com.rifsxd.ksunext") === 0) continue;
+    rows.push({ pid, cpu, name });
+  }
+  if (!rows.length) return;
+  if (!window._topLoggedOnce) { window._topLoggedOnce = 1; await wlog("TOP " + rows.slice(0, 4).map(r => r.name + "=" + r.cpu + "%").join(", ")); }
+  const max = Math.max(10, rows[0].cpu);
+  const host = $("topapps");
+  host.innerHTML = "";
+  rows.slice(0, 6).forEach((r, i) => {
+    const cls = pctClass(r.cpu);
+    const d = document.createElement("div");
+    d.className = "proc";
+    d.style.animationDelay = (i * 0.05) + "s";
+    d.innerHTML =
+      '<div class="rank">' + (i + 1) + '</div>' +
+      '<div class="meta"><div class="nm">' + r.name.replace(/</g, "&lt;") + '</div>' +
+      '<div class="pid">PID ' + r.pid + '</div>' +
+      '<div class="track"><i style="width:' + Math.round(r.cpu / max * 100) + '%"></i></div></div>' +
+      '<div class="pct ' + cls + '">' + r.cpu.toFixed(1) + '%</div>';
+    host.appendChild(d);
+  });
+}
+
+setInterval(refreshTopApps, 30000);
+
+/* start */
+(async function init() {
+  $("subtxt").textContent = "memeriksa akses root...";
+  await wlog("BOOT ksu=" + (window.ksu ? "ADA" : "TIDAK") +
+    " exec=" + (ksuHas("exec") ? "ADA" : "TIDAK") +
+    " writeFile=" + (ksuHas("writeFile") ? "ADA" : "TIDAK"));
+
+  /* uji cepat: apakah exec benar-benar memberi output */
+  const probe = await execFull("echo __AJRAL_OK__", {});
+  await wlog("PROBE errno=" + probe.errno + " out=" + JSON.stringify(probe.stdout.trim()) +
+    " err=" + JSON.stringify(probe.stderr.trim()));
+
+  const ok = await loadInfo();
+  await wlog("LOADINFO ok=" + ok + " kernel=" + (CFG.kernel || "?") + " mode=" + EXEC_MODE);
+  if (ok) {
+    syncUI();
+    $("card-diag").open = false;
+    $("subtxt").textContent += " · ksu:" + EXEC_MODE;
+    await wlog("UI kernel=" + $("sub").textContent +
+      " | gov0=" + $("g0").value + " gov4=" + $("g4").value + " gov7=" + $("g7").value +
+      " | opsigovernor_count=" + $("g0").options.length +
+      " | gpu=" + $("gg").value +
+      " | sda=" + $("s-sda").value + " mmc=" + $("s-mmc").value +
+      " | tcp=" + $("s-cc").value +
+      " | suhu_batt=" + $("s-tb").textContent + " cpu7=" + $("s-t7").textContent);
+    refreshTopApps();
+  } else {
+    $("card-diag").open = true;
+    await runDiag();
+    $("card-diag").scrollIntoView({ behavior: "smooth", block: "start" });
+    $("subtxt").textContent = "tidak dapat akses root"; $("sub").classList.add("err");
+    toast("Tidak ada akses root — lihat Diagnostik", true);
+  }
+})();
+</script>
+</body>
+</html>
